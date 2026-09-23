@@ -118,10 +118,10 @@ function renderizar() {
     if (item.status === 'Pendente') pendentes++;
 
     // Totais por cluster
-    if (item.cluster === 'Cluster Blink') {
+    if (item.cluster === 'Blink/Nova/Justweb') {
       blinkTotal++;
       if (item.status === 'Migrado') blinkMigradas++;
-    } else if (item.cluster === 'Cluster MG') {
+    } else if (item.cluster === 'Cluster SEMPRE') {
       mgTotal++;
       if (item.status === 'Migrado') mgMigradas++;
     }
