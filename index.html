@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard de Migração de Máquinas</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f6f8; margin: 20px; }
+    .cards { display: flex; gap: 15px; margin-bottom: 20px; }
+    .card { background: #fff; padding: 15px; border-radius: 8px; flex: 1; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .card h3 { margin: 0 0 10px 0; font-size: 14px; color: #666; }
+    .card p { margin: 0; font-size: 24px; font-weight: bold; }
+    form { background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; }
+    input, select, button { padding: 8px; font-size: 14px; }
+    table { width: 100%; background: #fff; border-collapse: collapse; border-radius: 8px; overflow: hidden; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+    th { background: #007bff; color: white; }
+    .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+    .status-Migrado { background: #d4edda; color: #155724; }
+    .status-Pendente { background: #fff3cd; color: #856404; }
+    .status-EmAndamento { background: #cce5ff; color: #004085; }
+  </style>
+</head>
+<body>
+
+  <h2>Dashboard de Migração</h2>
+
+  <!-- MÉTIRCAS PRINCIPAIS -->
+  <div class="cards">
+    <div class="card"><h3>Total de Máquinas</h3><p id="total-maquinas">0</p></div>
+    <div class="card"><h3>Já Migradas</h3><p id="total-migradas">0</p></div>
+    <div class="card"><h3>Pendentes</h3><p id="total-pendentes">0</p></div>
+  </div>
+
+  <!-- FORMULÁRIO DE CADASTRO -->
+  <form id="form-cadastro">
+    <input type="text" id="nome-maquina" placeholder="Nome da Máquina" required>
+    <select id="select-cluster" required>
+      <option value="">Selecione o Cluster</option>
+      <option value="Cluster Blink">Cluster Blink</option>
+      <option value="Cluster MG">Cluster MG</option>
+    </select>
+    <select id="select-status" required>
+      <option value="Pendente">Pendente</option>
+      <option value="Em Andamento">Em Andamento</option>
+      <option value="Migrado">Migrado</option>
+    </select>
+    <button type="submit">Cadastrar Máquina</button>
+  </form>
+
+  <!-- TABELA DE STATUS -->
+  <table>
+    <thead>
+      <tr>
+        <th>Máquina</th>
+        <th>Cluster</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="tabela-maquinas"></tbody>
+  </table>
+
+  <script src="app.js"></script>
+</body>
+</html>
