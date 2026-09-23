@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "nome": "srv-db-01",
+    "cluster": "Cluster Blink",
+    "status": "Migrado"
+  },
+  {
+    "id": 2,
+    "nome": "srv-app-02",
+    "cluster": "Cluster MG",
+    "status": "Em Andamento"
+  },
+  {
+    "id": 3,
+    "nome": "srv-web-01",
+    "cluster": "Cluster Blink",
+    "status": "Pendente"
+  }
+]
