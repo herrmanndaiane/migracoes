@@ -1,8 +1,5 @@
-// CONFIGURAÇÃO DO JSONBIN.IO
-const JSONBIN_CONFIG = {
-  binId: '6ab414a3ffd5d16053278750',   // ex: '65f8a123abc4567890'
-  apiKey: '$2a$10$2GS3IXMMHlIzufc5EnxDYedXLztIAI6RuWrJJR8nbDniz6D6aaU.C'  // ex: '$2a$10$AbCdEfGhIjKlMnOpQrStUvWxYz123456'
-};
+// URL DO SEU FIREBASE REALTIME DATABASE
+const FIREBASE_URL = 'https://SEU_PROJETO-default-rtdb.firebaseio.com/maquinas.json';
 
 let maquinas = [];
 let chartStatus = null;
@@ -10,10 +7,11 @@ let chartBlink = null;
 let chartMg = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Carrega os dados iniciais do JSONBin.io ao abrir a página
+  // Inicia a escuta em tempo real (atualiza automaticamente a cada 5 segundos)
   carregarDados();
+  setInterval(carregarDados, 5000);
 
-  // Escuta o formulário de cadastro de máquinas
+  // Form de cadastro
   const formCadastro = document.getElementById('form-cadastro');
   if (formCadastro) {
     formCadastro.addEventListener('submit', async (e) => {
@@ -27,24 +25,22 @@ document.addEventListener('DOMContentLoaded', () => {
         status: document.getElementById('select-status').value
       };
 
-      // Adiciona temporariamente na memória local
       maquinas.push(novaMaquina);
 
-      // Envia para o JSONBin.io para salvar permanentemente
-      const sucesso = await salvarNoJsonbin(maquinas);
+      const sucesso = await salvarNoFirebase(maquinas);
 
       if (sucesso) {
         renderizar();
         e.target.reset();
-        alert('Servidor cadastrado e salvo com sucesso!');
+        alert('Servidor cadastrado e sincronizado com sucesso!');
       } else {
-        maquinas.pop(); // Reverte a adição se a API falhar
-        alert('Erro ao salvar no JSONBin. Verifique suas chaves (Bin ID e API Key) no app.js.');
+        maquinas.pop();
+        alert('Erro ao sincronizar com o Firebase.');
       }
     });
   }
 
-  // Busca em tempo real na tabela
+  // Busca na tabela
   const inputBusca = document.getElementById('input-busca');
   if (inputBusca) {
     inputBusca.addEventListener('input', (e) => {
@@ -53,45 +49,35 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// 1. LER DADOS DO JSONBIN.IO (READ)
+// 1. CARREGAR DADOS DO FIREBASE
 async function carregarDados() {
   try {
-    const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_CONFIG.binId}/latest`, {
-      method: 'GET',
-      headers: {
-        'X-Master-Key': JSONBIN_CONFIG.apiKey
-      }
-    });
+    const response = await fetch(FIREBASE_URL);
+    if (!response.ok) throw new Error('Erro ao buscar dados do Firebase');
 
-    if (!response.ok) {
-      throw new Error(`Erro na API (${response.status}): Verifique o Bin ID e a API Key.`);
-    }
-
-    const result = await response.json();
-    // No JSONBin.io v3, o seu JSON fica salvo dentro da propriedade 'record'
-    maquinas = Array.isArray(result.record) ? result.record : [];
+    const data = await response.json();
+    
+    // O Firebase pode retornar null se o banco estiver vazio
+    maquinas = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
     
     renderizar();
   } catch (error) {
-    console.error('Erro ao carregar dados:', error);
+    console.error('Erro na sincronização:', error);
   }
 }
 
-// 2. GRAVAR DADOS NO JSONBIN.IO (UPDATE)
-async function salvarNoJsonbin(novosDados) {
+// 2. SALVAR DADOS NO FIREBASE (PUT substitui todo o objeto "maquinas")
+async function salvarNoFirebase(novosDados) {
   try {
-    const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_CONFIG.binId}`, {
+    const response = await fetch(FIREBASE_URL, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Master-Key': JSONBIN_CONFIG.apiKey
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(novosDados)
     });
 
     return response.ok;
   } catch (error) {
-    console.error('Erro na requisição PUT:', error);
+    console.error('Erro ao salvar no Firebase:', error);
     return false;
   }
 }
@@ -101,32 +87,27 @@ async function excluirMaquina(id) {
   if (!confirm('Deseja realmente remover este servidor?')) return;
 
   maquinas = maquinas.filter(m => m.id !== id);
-  const sucesso = await salvarNoJsonbin(maquinas);
+  const sucesso = await salvarNoFirebase(maquinas);
 
   if (sucesso) {
     renderizar();
   } else {
-    alert('Erro ao excluir do servidor remoto.');
-    carregarDados(); // Restaura o estado anterior
+    alert('Erro ao excluir do banco de dados.');
+    carregarDados();
   }
 }
 
-// 4. CALCULAR MÉTRICAS E RENDERIZAR PAINEL
+// 4. RENDERIZAR INTERFACE
 function renderizar() {
-  let migradas = 0;
-  let pendentes = 0;
-  let emAndamento = 0;
-
+  let migradas = 0, pendentes = 0, emAndamento = 0;
   let blinkTotal = 0, blinkMigradas = 0;
   let mgTotal = 0, mgMigradas = 0;
 
   maquinas.forEach(item => {
-    // Totais gerais por Status
     if (item.status === 'Migrado') migradas++;
     else if (item.status === 'Pendente') pendentes++;
     else if (item.status === 'Em Andamento') emAndamento++;
 
-    // Totais específicos por Cluster
     if (item.cluster === 'Cluster Blink') {
       blinkTotal++;
       if (item.status === 'Migrado') blinkMigradas++;
@@ -136,34 +117,29 @@ function renderizar() {
     }
   });
 
-  // Atualiza os contadores numéricos dos cards
   document.getElementById('total-servidores').innerText = maquinas.length;
   document.getElementById('total-migrados').innerText = migradas;
   document.getElementById('total-andamento').innerText = emAndamento;
   document.getElementById('total-pendentes').innerText = pendentes;
 
-  // Cálculo das porcentagens de migração por cluster
   const pctBlink = blinkTotal > 0 ? Math.round((blinkMigradas / blinkTotal) * 100) : 0;
   const pctMG = mgTotal > 0 ? Math.round((mgMigradas / mgTotal) * 100) : 0;
 
-  // Atualiza os rótulos de estatísticas
   const blinkStats = document.getElementById('blink-stats');
   const mgStats = document.getElementById('mg-stats');
   if (blinkStats) blinkStats.innerText = `${pctBlink}% (${blinkMigradas}/${blinkTotal})`;
   if (mgStats) mgStats.innerText = `${pctMG}% (${mgMigradas}/${mgTotal})`;
 
-  // Atualiza as barras de progresso horizontais
   const blinkBar = document.getElementById('blink-bar');
   const mgBar = document.getElementById('mg-bar');
   if (blinkBar) blinkBar.style.width = `${pctBlink}%`;
   if (mgBar) mgBar.style.width = `${pctMG}%`;
 
-  // Renderiza a tabela e atualiza os gráficos em pizza/rosca
   renderizarTabela();
   renderizarGraficos(migradas, emAndamento, pendentes, pctBlink, pctMG);
 }
 
-// 5. RENDERIZAR TABELA DE MÁQUINAS
+// 5. RENDERIZAR TABELA
 function renderizarTabela(filtro = '') {
   const tabela = document.getElementById('tabela-maquinas');
   if (!tabela) return;
@@ -198,11 +174,10 @@ function renderizarTabela(filtro = '') {
   });
 }
 
-// 6. RENDERIZAR GRÁFICOS EM PIZZA / ROSCA (CHART.JS)
+// 6. RENDERIZAR GRÁFICOS
 function renderizarGraficos(migradas, emAndamento, pendentes, pctBlink, pctMG) {
   if (typeof Chart === 'undefined') return;
 
-  // Gráfico Status Geral
   const ctxStatus = document.getElementById('chart-status');
   if (ctxStatus) {
     if (chartStatus) chartStatus.destroy();
@@ -225,7 +200,6 @@ function renderizarGraficos(migradas, emAndamento, pendentes, pctBlink, pctMG) {
     });
   }
 
-  // Gráfico Donut Cluster Blink
   const ctxBlink = document.getElementById('chart-blink');
   if (ctxBlink) {
     if (chartBlink) chartBlink.destroy();
@@ -248,7 +222,6 @@ function renderizarGraficos(migradas, emAndamento, pendentes, pctBlink, pctMG) {
     });
   }
 
-  // Gráfico Donut Cluster MG
   const ctxMg = document.getElementById('chart-mg');
   if (ctxMg) {
     if (chartMg) chartMg.destroy();
