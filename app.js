@@ -1,7 +1,7 @@
 // CONFIGURAÇÃO DO JSONBIN.IO
 const JSONBIN_CONFIG = {
-  binId: '6aba6670ffd5d16053379470',   // Exemplo: '65f8a123abc4567890'
-  apiKey: '$2a$10$2GS3IXMMHlIzufc5EnxDYedXLztIAI6RuWrJJR8nbDniz6D6aaU.C'  // Exemplo: '$2a$10$AbCdEfGh...'
+  binId: '6aba6670ffd5d16053379470',
+  apiKey: '$2a$10$2GS3IXMMHlIzufc5EnxDYedXLztIAI6RuWrJJR8nbDniz6D6aaU.C' // Cole a Master Key completa mantendo o $2a$10$...
 };
 
 let maquinas = [];
@@ -10,15 +10,11 @@ let chartBlink = null;
 let chartMg = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Carrega os dados assim que a página abre
   carregarDados();
 
-  // ATUALIZAÇÃO EM TEMPO REAL: Lê os dados do JSONBin a cada 5 segundos
-  setInterval(() => {
-    carregarDados();
-  }, 5000);
+  // Auto-refresh a cada 5 segundos para sincronização em tempo real
+  setInterval(carregarDados, 5000);
 
-  // Escuta o formulário de cadastro
   const formCadastro = document.getElementById('form-cadastro');
   if (formCadastro) {
     formCadastro.addEventListener('submit', async (e) => {
@@ -34,21 +30,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
       maquinas.push(novaMaquina);
 
-      // Envia os dados para a nuvem no JSONBin.io
       const sucesso = await salvarNoJsonbin(maquinas);
 
       if (sucesso) {
         renderizar();
         e.target.reset();
-        alert('Servidor cadastrado e guardado na nuvem com sucesso!');
+        alert('Servidor cadastrado e salvo com sucesso!');
       } else {
-        maquinas.pop(); // Reverte se falhar
-        alert('Erro ao guardar no JSONBin. Verifique o Bin ID e a API Key no app.js.');
+        maquinas.pop();
+        alert('Erro ao salvar no JSONBin. Verifique o console do navegador (F12).');
       }
     });
   }
 
-  // Filtro de busca na tabela
   const inputBusca = document.getElementById('input-busca');
   if (inputBusca) {
     inputBusca.addEventListener('input', (e) => {
@@ -57,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// LER DADOS DO JSONBIN.IO
+// LER DADOS DO JSONBIN
 async function carregarDados() {
   try {
     const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_CONFIG.binId}/latest`, {
@@ -67,18 +61,21 @@ async function carregarDados() {
       }
     });
 
-    if (!response.ok) throw new Error('Erro na autenticação do JSONBin');
+    if (!response.ok) {
+      console.error('Falha no carregamento. Status:', response.status);
+      return;
+    }
 
     const result = await response.json();
     maquinas = Array.isArray(result.record) ? result.record : [];
     
     renderizar();
   } catch (error) {
-    console.error('Erro ao carregar dados:', error);
+    console.error('Erro de conexão ao carregar dados:', error);
   }
 }
 
-// GUARDAR DADOS NO JSONBIN.IO (DISPONÍVEL PARA TODOS OS UTILIZADORES)
+// SALVAR DADOS NO JSONBIN
 async function salvarNoJsonbin(novosDados) {
   try {
     const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_CONFIG.binId}`, {
@@ -92,12 +89,12 @@ async function salvarNoJsonbin(novosDados) {
 
     return response.ok;
   } catch (error) {
-    console.error('Erro ao guardar:', error);
+    console.error('Erro de conexão ao salvar dados:', error);
     return false;
   }
 }
 
-// REMOVER MÁQUINA
+// EXCLUIR MÁQUINA
 async function excluirMaquina(id) {
   if (!confirm('Deseja realmente remover este servidor?')) return;
 
@@ -107,12 +104,12 @@ async function excluirMaquina(id) {
   if (sucesso) {
     renderizar();
   } else {
-    alert('Erro ao remover o servidor da nuvem.');
+    alert('Erro ao excluir do servidor.');
     carregarDados();
   }
 }
 
-// RENDERIZAR MÉTRICAS E GRÁFICOS
+// RENDERIZAR INTERFACE
 function renderizar() {
   let migradas = 0, pendentes = 0, emAndamento = 0;
   let blinkTotal = 0, blinkMigradas = 0;
@@ -132,10 +129,17 @@ function renderizar() {
     }
   });
 
-  document.getElementById('total-servidores').innerText = maquinas.length;
-  document.getElementById('total-migrados').innerText = migradas;
-  document.getElementById('total-andamento').innerText = emAndamento;
-  document.getElementById('total-pendentes').innerText = pendentes;
+  const totalEl = document.getElementById('total-servidores');
+  if (totalEl) totalEl.innerText = maquinas.length;
+  
+  const migEl = document.getElementById('total-migrados');
+  if (migEl) migEl.innerText = migradas;
+  
+  const andEl = document.getElementById('total-andamento');
+  if (andEl) andEl.innerText = emAndamento;
+  
+  const penEl = document.getElementById('total-pendentes');
+  if (penEl) penEl.innerText = pendentes;
 
   const pctBlink = blinkTotal > 0 ? Math.round((blinkMigradas / blinkTotal) * 100) : 0;
   const pctMG = mgTotal > 0 ? Math.round((mgMigradas / mgTotal) * 100) : 0;
@@ -162,10 +166,10 @@ function renderizarTabela(filtro = '') {
   tabela.innerHTML = '';
 
   const maquinasFiltradas = maquinas.filter(m => 
-    m.nome.toLowerCase().includes(filtro) ||
+    (m.nome && m.nome.toLowerCase().includes(filtro)) ||
     (m.origem && m.origem.toLowerCase().includes(filtro)) ||
-    m.cluster.toLowerCase().includes(filtro) ||
-    m.status.toLowerCase().includes(filtro)
+    (m.cluster && m.cluster.toLowerCase().includes(filtro)) ||
+    (m.status && m.status.toLowerCase().includes(filtro))
   );
 
   maquinasFiltradas.forEach(item => {
@@ -175,12 +179,12 @@ function renderizarTabela(filtro = '') {
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><strong>${item.nome}</strong></td>
+      <td><strong>${item.nome || 'Sem nome'}</strong></td>
       <td>${item.origem || 'N/A'}</td>
-      <td>${item.cluster}</td>
-      <td><span class="badge ${badgeClass}">${item.status}</span></td>
+      <td>${item.cluster || 'N/A'}</td>
+      <td><span class="badge ${badgeClass}">${item.status || 'Pendente'}</span></td>
       <td>
-        <button onclick="excluirMaquina(${item.id})" style="background:none; border:none; color:#ef4444; cursor:pointer;" title="Eliminar">
+        <button onclick="excluirMaquina(${item.id})" style="background:none; border:none; color:#ef4444; cursor:pointer;" title="Excluir">
           🗑️
         </button>
       </td>
@@ -189,7 +193,7 @@ function renderizarTabela(filtro = '') {
   });
 }
 
-// RENDERIZAR GRÁFICOS EM ROSCA / PIZZA
+// RENDERIZAR GRÁFICOS
 function renderizarGraficos(migradas, emAndamento, pendentes, pctBlink, pctMG) {
   if (typeof Chart === 'undefined') return;
 
