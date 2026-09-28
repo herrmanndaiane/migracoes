@@ -1,5 +1,8 @@
-// URL DO SEU FIREBASE REALTIME DATABASE
-const FIREBASE_URL = 'https://SEU_PROJETO-default-rtdb.firebaseio.com/maquinas.json';
+// CONFIGURAÇÃO DO JSONBIN.IO
+const JSONBIN_CONFIG = {
+  binId: '6aba6670ffd5d16053379470',   // Exemplo: '65f8a123abc4567890'
+  apiKey: '$2a$10$2GS3IXMMHlIzufc5EnxDYedXLztIAI6RuWrJJR8nbDniz6D6aaU.C'  // Exemplo: '$2a$10$AbCdEfGh...'
+};
 
 let maquinas = [];
 let chartStatus = null;
@@ -7,11 +10,15 @@ let chartBlink = null;
 let chartMg = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Inicia a escuta em tempo real (atualiza automaticamente a cada 5 segundos)
+  // Carrega os dados assim que a página abre
   carregarDados();
-  setInterval(carregarDados, 5000);
 
-  // Form de cadastro
+  // ATUALIZAÇÃO EM TEMPO REAL: Lê os dados do JSONBin a cada 5 segundos
+  setInterval(() => {
+    carregarDados();
+  }, 5000);
+
+  // Escuta o formulário de cadastro
   const formCadastro = document.getElementById('form-cadastro');
   if (formCadastro) {
     formCadastro.addEventListener('submit', async (e) => {
@@ -27,20 +34,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
       maquinas.push(novaMaquina);
 
-      const sucesso = await salvarNoFirebase(maquinas);
+      // Envia os dados para a nuvem no JSONBin.io
+      const sucesso = await salvarNoJsonbin(maquinas);
 
       if (sucesso) {
         renderizar();
         e.target.reset();
-        alert('Servidor cadastrado e sincronizado com sucesso!');
+        alert('Servidor cadastrado e guardado na nuvem com sucesso!');
       } else {
-        maquinas.pop();
-        alert('Erro ao sincronizar com o Firebase.');
+        maquinas.pop(); // Reverte se falhar
+        alert('Erro ao guardar no JSONBin. Verifique o Bin ID e a API Key no app.js.');
       }
     });
   }
 
-  // Busca na tabela
+  // Filtro de busca na tabela
   const inputBusca = document.getElementById('input-busca');
   if (inputBusca) {
     inputBusca.addEventListener('input', (e) => {
@@ -49,55 +57,62 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// 1. CARREGAR DADOS DO FIREBASE
+// LER DADOS DO JSONBIN.IO
 async function carregarDados() {
   try {
-    const response = await fetch(FIREBASE_URL);
-    if (!response.ok) throw new Error('Erro ao buscar dados do Firebase');
+    const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_CONFIG.binId}/latest`, {
+      method: 'GET',
+      headers: {
+        'X-Master-Key': JSONBIN_CONFIG.apiKey
+      }
+    });
 
-    const data = await response.json();
-    
-    // O Firebase pode retornar null se o banco estiver vazio
-    maquinas = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
+    if (!response.ok) throw new Error('Erro na autenticação do JSONBin');
+
+    const result = await response.json();
+    maquinas = Array.isArray(result.record) ? result.record : [];
     
     renderizar();
   } catch (error) {
-    console.error('Erro na sincronização:', error);
+    console.error('Erro ao carregar dados:', error);
   }
 }
 
-// 2. SALVAR DADOS NO FIREBASE (PUT substitui todo o objeto "maquinas")
-async function salvarNoFirebase(novosDados) {
+// GUARDAR DADOS NO JSONBIN.IO (DISPONÍVEL PARA TODOS OS UTILIZADORES)
+async function salvarNoJsonbin(novosDados) {
   try {
-    const response = await fetch(FIREBASE_URL, {
+    const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_CONFIG.binId}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': JSONBIN_CONFIG.apiKey
+      },
       body: JSON.stringify(novosDados)
     });
 
     return response.ok;
   } catch (error) {
-    console.error('Erro ao salvar no Firebase:', error);
+    console.error('Erro ao guardar:', error);
     return false;
   }
 }
 
-// 3. EXCLUIR MÁQUINA
+// REMOVER MÁQUINA
 async function excluirMaquina(id) {
   if (!confirm('Deseja realmente remover este servidor?')) return;
 
   maquinas = maquinas.filter(m => m.id !== id);
-  const sucesso = await salvarNoFirebase(maquinas);
+  const sucesso = await salvarNoJsonbin(maquinas);
 
   if (sucesso) {
     renderizar();
   } else {
-    alert('Erro ao excluir do banco de dados.');
+    alert('Erro ao remover o servidor da nuvem.');
     carregarDados();
   }
 }
 
-// 4. RENDERIZAR INTERFACE
+// RENDERIZAR MÉTRICAS E GRÁFICOS
 function renderizar() {
   let migradas = 0, pendentes = 0, emAndamento = 0;
   let blinkTotal = 0, blinkMigradas = 0;
@@ -139,7 +154,7 @@ function renderizar() {
   renderizarGraficos(migradas, emAndamento, pendentes, pctBlink, pctMG);
 }
 
-// 5. RENDERIZAR TABELA
+// RENDERIZAR TABELA
 function renderizarTabela(filtro = '') {
   const tabela = document.getElementById('tabela-maquinas');
   if (!tabela) return;
@@ -165,7 +180,7 @@ function renderizarTabela(filtro = '') {
       <td>${item.cluster}</td>
       <td><span class="badge ${badgeClass}">${item.status}</span></td>
       <td>
-        <button onclick="excluirMaquina(${item.id})" style="background:none; border:none; color:#ef4444; cursor:pointer;" title="Excluir">
+        <button onclick="excluirMaquina(${item.id})" style="background:none; border:none; color:#ef4444; cursor:pointer;" title="Eliminar">
           🗑️
         </button>
       </td>
@@ -174,7 +189,7 @@ function renderizarTabela(filtro = '') {
   });
 }
 
-// 6. RENDERIZAR GRÁFICOS
+// RENDERIZAR GRÁFICOS EM ROSCA / PIZZA
 function renderizarGraficos(migradas, emAndamento, pendentes, pctBlink, pctMG) {
   if (typeof Chart === 'undefined') return;
 
