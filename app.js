@@ -1,7 +1,7 @@
 // CONFIGURAÇÃO DO JSONBIN.IO
 const JSONBIN_CONFIG = {
   binId: '6aba6670ffd5d16053379470',
-  apiKey: '$2a$10$2GS3IXMMHlIzufc5EnxDYedXLztIAI6RuWrJJR8nbDniz6D6aaU.C' // Cole sua Master Key mantendo o $2a$10$...
+  apiKey: '$2a$10$2GS3IXMMHlIzufc5EnxDYedXLztIAI6RuWrJJR8nbDniz6D6aaU.C' // Necessária para PUT (criar/editar/excluir)
 };
 
 let maquinas = [];
@@ -10,16 +10,16 @@ let chartBlink = null;
 let chartMg = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Inicializa gráficos do layout
+  // Inicializa a estrutura dos gráficos do layout
   inicializarGraficos();
 
-  // Carrega dados iniciais do JSONBin
+  // Carrega os dados do JSONBin assim que abre a página
   carregarDados();
 
   // Sincronização automática em tempo real a cada 5 segundos
   setInterval(carregarDados, 5000);
 
-  // Formulário de Cadastro
+  // Formulário de Cadastro de Servidores
   const formCadastro = document.getElementById('form-cadastro');
   if (formCadastro) {
     formCadastro.addEventListener('submit', async (e) => {
@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       maquinas.unshift(novaMaquina);
 
+      // Salva a nova lista atualizada na nuvem
       const sucesso = await salvarNoJsonbin(maquinas);
 
       if (sucesso) {
@@ -48,47 +49,55 @@ document.addEventListener('DOMContentLoaded', () => {
         e.target.reset();
         alert('Servidor cadastrado e sincronizado com sucesso!');
       } else {
-        maquinas.shift(); // Reverte alterações se falhar
-        alert('Erro ao salvar no JSONBin. Verifique suas chaves.');
+        maquinas.shift(); // Reverte a alteração local se o salvamento falhar
+        alert('Erro ao salvar no JSONBin. Verifique se a sua Master Key está correta.');
       }
     });
   }
 
-  // Filtros em tempo real
+  // Filtro de Busca Por Nome/Origem
   const filtroBusca = document.getElementById('filtro-busca') || document.getElementById('input-busca');
   if (filtroBusca) {
     filtroBusca.addEventListener('input', renderizarDashboard);
   }
 
+  // Filtro de Busca Por Cluster
   const filtroCluster = document.getElementById('filtro-cluster-select');
   if (filtroCluster) {
     filtroCluster.addEventListener('change', renderizarDashboard);
   }
 });
 
-// LER DADOS DO JSONBIN.IO
+// 1. LER DADOS DO JSONBIN.IO (Requisicao Pública para evitar Erro 403)
 async function carregarDados() {
   try {
-    const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_CONFIG.binId}/latest`, {
-      method: 'GET',
-      headers: {
-        'X-Master-Key': JSONBIN_CONFIG.apiKey
-      }
-    });
+    const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_CONFIG.binId}/latest`);
 
-    if (!response.ok) return;
+    if (!response.ok) {
+      console.error('Falha na resposta da API:', response.status);
+      return;
+    }
 
     const result = await response.json();
-    maquinas = Array.isArray(result.record) ? result.record : [];
-    
-    renderizarDashboard();
+
+    // Garante a extração correta do array retornado pelo JSONBin
+    if (result && Array.isArray(result.record)) {
+      maquinas = result.record;
+      renderizarDashboard();
+    }
   } catch (error) {
-    console.error('Erro ao conectar com o JSONBin:', error);
+    console.error('Erro de conexão ao carregar dados:', error);
   }
 }
 
-// SALVAR DADOS NO JSONBIN.IO
+// 2. SALVAR DADOS NO JSONBIN.IO (Com Trava de Segurança Anti-Perda de Dados)
 async function salvarNoJsonbin(novosDados) {
+  // SEGURANÇA: Impede que o script envie uma lista vazia e apague o banco de dados na nuvem
+  if (!Array.isArray(novosDados) || novosDados.length === 0) {
+    console.warn('Tentativa de salvar lista vazia foi bloqueada para proteger o banco de dados.');
+    return false;
+  }
+
   try {
     const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_CONFIG.binId}`, {
       method: 'PUT',
@@ -101,14 +110,14 @@ async function salvarNoJsonbin(novosDados) {
 
     return response.ok;
   } catch (error) {
-    console.error('Erro ao salvar no JSONBin:', error);
+    console.error('Erro de conexão ao salvar dados:', error);
     return false;
   }
 }
 
-// REMOVER MÁQUINA
+// 3. REMOVER MÁQUINA
 async function removerMaquina(id) {
-  if (!confirm('Deseja realmente remover este servidor?')) return;
+  if (!confirm('Deseja realmente remover este servidor do painel?')) return;
 
   maquinas = maquinas.filter(m => m.id !== id);
   const sucesso = await salvarNoJsonbin(maquinas);
@@ -116,16 +125,16 @@ async function removerMaquina(id) {
   if (sucesso) {
     renderizarDashboard();
   } else {
-    alert('Erro ao excluir do servidor remoto.');
-    carregarDados();
+    alert('Erro ao excluir o servidor no banco de dados.');
+    carregarDados(); // Recompoe os dados em tela se a exclusao falhar
   }
 }
 
-// INICIALIZAR ESTRUTURA DOS GRÁFICOS CHART.JS
+// 4. INICIALIZAR ESTRUTURA DOS GRÁFICOS CHART.JS
 function inicializarGraficos() {
   if (typeof Chart === 'undefined') return;
 
-  // 1. Donut Geral
+  // Donut Geral
   const elGeral = document.getElementById('chartStatusDonut');
   if (elGeral) {
     const ctxGeral = elGeral.getContext('2d');
@@ -149,7 +158,7 @@ function inicializarGraficos() {
     });
   }
 
-  // 2. Mini Donut Blink
+  // Mini Donut Blink
   const elBlink = document.getElementById('chartBlinkMini');
   if (elBlink) {
     const ctxBlink = elBlink.getContext('2d');
@@ -171,7 +180,7 @@ function inicializarGraficos() {
     });
   }
 
-  // 3. Mini Donut MG
+  // Mini Donut MG
   const elMg = document.getElementById('chartMgMini');
   if (elMg) {
     const ctxMg = elMg.getContext('2d');
@@ -194,7 +203,7 @@ function inicializarGraficos() {
   }
 }
 
-// RENDERIZAR TODOS OS COMPONENTES DO DASHBOARD ORIGINAL
+// 5. RENDERIZAR TODOS OS COMPONENTES E KPIS DO DASHBOARD
 function renderizarDashboard() {
   let totalMigrados = 0;
   let totalAndamento = 0;
@@ -219,7 +228,7 @@ function renderizarDashboard() {
 
   const totalGeral = maquinas.length;
 
-  // 1. Atualizar KPIs Superiores
+  // KPIs Superiores
   const kpiTotal = document.getElementById('kpi-total');
   if (kpiTotal) kpiTotal.innerText = totalGeral;
 
@@ -233,7 +242,7 @@ function renderizarDashboard() {
   const taxaGeral = totalGeral > 0 ? Math.round((totalMigrados / totalGeral) * 100) : 0;
   if (kpiTaxa) kpiTaxa.innerText = `${taxaGeral}%`;
 
-  // 2. Atualizar Painel Central e Gráfico Geral
+  // Painel Central e Donut Geral
   const donutCount = document.getElementById('donut-total-count');
   if (donutCount) donutCount.innerText = totalGeral;
 
@@ -251,7 +260,7 @@ function renderizarDashboard() {
     chartGeral.update();
   }
 
-  // 3. Atualizar Cluster Blink
+  // Cluster Blink
   const pctBlink = blinkTotal > 0 ? Math.round((blinkMigrados / blinkTotal) * 100) : 0;
   const blinkPctText = document.getElementById('blink-pct-text');
   if (blinkPctText) blinkPctText.innerText = `${pctBlink}%`;
@@ -270,7 +279,7 @@ function renderizarDashboard() {
     chartBlink.update();
   }
 
-  // 4. Atualizar Cluster MG
+  // Cluster MG
   const pctMg = mgTotal > 0 ? Math.round((mgMigrados / mgTotal) * 100) : 0;
   const mgPctText = document.getElementById('mg-pct-text');
   if (mgPctText) mgPctText.innerText = `${pctMg}%`;
@@ -289,11 +298,11 @@ function renderizarDashboard() {
     chartMg.update();
   }
 
-  // 5. Renderizar Tabela Filtrada
+  // Renderiza a Tabela
   renderizarTabela();
 }
 
-// RENDERIZAR TABELA ALINHADA COM O LAYOUT
+// 6. RENDERIZAR TABELA COM SUPORTE A ORIGEM E PÍLULAS DE STATUS
 function renderizarTabela() {
   const tabela = document.getElementById('tabela-maquinas');
   if (!tabela) return;
@@ -337,10 +346,11 @@ function renderizarTabela() {
           <div class="server-icon"><i class="fa-solid fa-server"></i></div>
           <div>
             <strong>${item.nome || 'Sem nome'}</strong>
-            <div style="font-size: 11px; color: var(--text-muted, #8c93a6);">${item.origem || 'On-Premise'}</div>
+            <div style="font-size: 11px; color: var(--text-muted, #8c93a6);">ID: #${item.id.toString().slice(-4)}</div>
           </div>
         </div>
       </td>
+      <td>${item.origem || 'On-Premise'}</td>
       <td>
         <div class="cluster-tag">
           <span class="cluster-circle ${circleClass}"></span>
@@ -352,7 +362,7 @@ function renderizarTabela() {
           <i class="fa-solid ${statusIcon}"></i> ${item.status || 'Pendente'}
         </span>
       </td>
-      <td style="color: var(--text-secondary, #a1a8bd);">${item.data || '2026-09-24'}</td>
+      <td style="color: var(--text-secondary, #a1a8bd);">${item.data || '2026-09-28'}</td>
       <td style="text-align: right;">
         <button class="action-btn-delete" title="Excluir" onclick="removerMaquina(${item.id})" style="background:none; border:none; color:#ef4444; cursor:pointer;">
           <i class="fa-solid fa-trash-can"></i> 🗑️
