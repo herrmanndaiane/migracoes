@@ -1,7 +1,7 @@
 // CONFIGURAÇÃO DO JSONBIN.IO
 const JSONBIN_CONFIG = {
   binId: '6aba6670ffd5d16053379470',
-  apiKey: '$2a$10$2GS3IXMMHlIzufc5EnxDYedXLztIAI6RuWrJJR8nbDniz6D6aaU.C' // Necessária para PUT (criar/editar/excluir)
+  apiKey: '$2a$10$2GS3IXMMHlIzufc5EnxDYedXLztIAI6RuWrJJR8nbDniz6D6aaU.C'
 };
 
 let maquinas = [];
@@ -68,10 +68,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// 1. LER DADOS DO JSONBIN.IO (Requisicao Pública para evitar Erro 403)
+// 1. LER DADOS DO JSONBIN.IO (Autenticado com X-Master-Key para evitar Erro 403)
 async function carregarDados() {
   try {
-    const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_CONFIG.binId}/latest`);
+    const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_CONFIG.binId}/latest`, {
+      method: 'GET',
+      headers: {
+        'X-Master-Key': JSONBIN_CONFIG.apiKey
+      }
+    });
 
     if (!response.ok) {
       console.error('Falha na resposta da API:', response.status);
