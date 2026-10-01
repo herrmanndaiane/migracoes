@@ -1,7 +1,7 @@
 // CONFIGURAÇÃO DO JSONBIN.IO
 const JSONBIN_CONFIG = {
   binId: '6aba6670ffd5d16053379470',
-  apiKey: '$2a$10$2GS3IXMMHlIzufc5EnxDYedXLztIAI6RuWrJJR8nbDniz6D6aaU.C' // Pode ser Master Key ou Access Key
+  apiKey: '$2a$10$2GS3IXMMHlIzufc5EnxDYedXLztIAI6RuWrJJR8nbDniz6D6aaU.C' // Master Key mantida para operações PUT
 };
 
 let maquinas = [];
@@ -9,23 +9,10 @@ let chartGeral = null;
 let chartBlink = null;
 let chartMg = null;
 
-// 1. LER DADOS DO JSONBIN.IO (Com Fallback de Segurança contra Erro 403)
+// 1. LER DADOS DO JSONBIN.IO (Requisição Pública Sem Cabeçalhos para Bins Públicos)
 async function carregarDados() {
   try {
-    // 1ª Tentativa: Envia a chave com os cabeçalhos aceitos pelo JSONBin
-    let response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_CONFIG.binId}/latest`, {
-      method: 'GET',
-      headers: {
-        'X-Master-Key': JSONBIN_CONFIG.apiKey,
-        'X-Access-Key': JSONBIN_CONFIG.apiKey
-      }
-    });
-
-    // 2ª Tentativa: Se der 403/401 (chave recusada), tenta a leitura pública direta do Bin
-    if (response.status === 403 || response.status === 401) {
-      console.warn('Chave recusada pela API. Tentando fallback de leitura pública...');
-      response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_CONFIG.binId}/latest`);
-    }
+    const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_CONFIG.binId}/latest`);
 
     if (!response.ok) {
       console.error('Falha de resposta no GET do JSONBin. Status:', response.status);
@@ -43,9 +30,9 @@ async function carregarDados() {
   }
 }
 
-// 2. SALVAR DADOS NO JSONBIN.IO (Com Trava Anti-Perda de Dados)
+// 2. SALVAR DADOS NO JSONBIN.IO (Com Trava de Segurança Anti-Perda de Dados)
 async function salvarNoJsonbin(novosDados) {
-  // Trava de segurança: impede o envio de array vazio que apagaria o banco
+  // Trava de segurança: impede o envio de array vazio que apagaria o banco de dados
   if (!Array.isArray(novosDados) || novosDados.length === 0) {
     console.warn('Bloqueado o envio de lista vazia para proteger o banco de dados.');
     return false;
@@ -56,8 +43,7 @@ async function salvarNoJsonbin(novosDados) {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'X-Master-Key': JSONBIN_CONFIG.apiKey,
-        'X-Access-Key': JSONBIN_CONFIG.apiKey
+        'X-Master-Key': JSONBIN_CONFIG.apiKey
       },
       body: JSON.stringify(novosDados)
     });
@@ -157,7 +143,7 @@ function inicializarGraficos() {
   }
 }
 
-// 5. RENDERIZAR TODOS OS COMPONENTES E KPIS DO DASHBOARD
+// 5. RENDERIZAR PAINEL
 function renderizarDashboard() {
   let totalMigrados = 0;
   let totalAndamento = 0;
@@ -182,7 +168,6 @@ function renderizarDashboard() {
 
   const totalGeral = maquinas.length;
 
-  // KPIs Superiores
   const kpiTotal = document.getElementById('kpi-total');
   if (kpiTotal) kpiTotal.innerText = totalGeral;
 
@@ -196,7 +181,6 @@ function renderizarDashboard() {
   const taxaGeral = totalGeral > 0 ? Math.round((totalMigrados / totalGeral) * 100) : 0;
   if (kpiTaxa) kpiTaxa.innerText = `${taxaGeral}%`;
 
-  // Donut Geral
   const donutCount = document.getElementById('donut-total-count');
   if (donutCount) donutCount.innerText = totalGeral;
 
@@ -214,7 +198,6 @@ function renderizarDashboard() {
     chartGeral.update();
   }
 
-  // Cluster Blink
   const pctBlink = blinkTotal > 0 ? Math.round((blinkMigrados / blinkTotal) * 100) : 0;
   const blinkPctText = document.getElementById('blink-pct-text');
   if (blinkPctText) blinkPctText.innerText = `${pctBlink}%`;
@@ -233,7 +216,6 @@ function renderizarDashboard() {
     chartBlink.update();
   }
 
-  // Cluster MG
   const pctMg = mgTotal > 0 ? Math.round((mgMigrados / mgTotal) * 100) : 0;
   const mgPctText = document.getElementById('mg-pct-text');
   if (mgPctText) mgPctText.innerText = `${pctMg}%`;
@@ -360,7 +342,7 @@ function iniciarApp() {
         alert('Servidor cadastrado e sincronizado com sucesso!');
       } else {
         maquinas.shift();
-        alert('Erro ao salvar no JSONBin. Verifique se a sua chave permite salvar dados.');
+        alert('Erro ao salvar no JSONBin. Verifique se a sua Master Key possui permissão de escrita.');
       }
     });
   }
