@@ -1,7 +1,7 @@
 // CONFIGURAÇÃO DO JSONBIN.IO
 const JSONBIN_CONFIG = {
   binId: '6aba6670ffd5d16053379470',
-  apiKey: '$2a$10$E107vBbvX17CQ5kgp7tnPuNt9TlGvLSk3P3wYZ5I1SxU1qOF1X/QG' // Pode ser Master Key ou Access Key
+  apiKey: '$2a$10$2GS3IXMMHlIzufc5EnxDYedXLztIAI6RuWrJJR8nbDniz6D6aaU.C' // Pode ser Master Key ou Access Key
 };
 
 let maquinas = [];
