@@ -34,6 +34,7 @@
       --neon-green: #10b981;
       --neon-purple: #8b5cf6;
       --neon-blue: #3b82f6;
+      --neon-orange: #ff7675;
     }
 
     * {
@@ -683,6 +684,8 @@
 
     .circle-blink { background-color: var(--neon-cyan); }
     .circle-mg { background-color: var(--neon-pink); }
+    .circle-btp { background-color: var(--neon-purple); }
+    .circle-legadas { background-color: var(--neon-amber); }
 
     /* STATUS BADGES */
     .status-pill {
@@ -1005,6 +1008,8 @@
             <option value="">Selecione o Cluster</option>
             <option value="Cluster Blink">Cluster Blink</option>
             <option value="Cluster MG">Cluster MG</option>
+            <option value="Cluster BTP">Cluster BTP</option>
+            <option value="Legadas">Legadas</option>
           </select>
 
           <select id="select-status" class="input-field" required>
@@ -1037,6 +1042,8 @@
               <option value="TODOS">Todos os Clusters</option>
               <option value="Cluster Blink">Cluster Blink</option>
               <option value="Cluster MG">Cluster MG</option>
+              <option value="Cluster BTP">Cluster BTP</option>
+              <option value="Legadas">Legadas</option>
             </select>
           </div>
         </div>
@@ -1162,6 +1169,8 @@
             <option value="">Selecione o Cluster</option>
             <option value="Cluster Blink">Cluster Blink</option>
             <option value="Cluster MG">Cluster MG</option>
+            <option value="Cluster BTP">Cluster BTP</option>
+            <option value="Legadas">Legadas</option>
           </select>
 
           <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, #7c3aed, #8b5cf6);">
@@ -1255,7 +1264,6 @@
 
         const data = await response.json();
 
-        // Trata os dados suportando a nova estrutura unificada (maquinas + fisicos)
         if (data && data.maquinas) {
           maquinas = Array.isArray(data.maquinas) ? data.maquinas : [];
           fisicos = Array.isArray(data.fisicos) ? data.fisicos : [];
@@ -1499,7 +1507,10 @@
           statusIcon = 'fa-spinner fa-spin';
         }
 
-        const circleClass = item.cluster === 'Cluster Blink' ? 'circle-blink' : 'circle-mg';
+        let circleClass = 'circle-blink';
+        if (item.cluster === 'Cluster MG') circleClass = 'circle-mg';
+        else if (item.cluster === 'Cluster BTP') circleClass = 'circle-btp';
+        else if (item.cluster === 'Legadas') circleClass = 'circle-legadas';
 
         tr.innerHTML = `
           <td>
@@ -1581,7 +1592,11 @@
           statusIcon = 'fa-hand-holding-dollar';
         }
 
-        const circleClass = item.cluster === 'Cluster Blink' ? 'circle-blink' : 'circle-mg';
+        let circleClass = 'circle-blink';
+        if (item.cluster === 'Cluster MG') circleClass = 'circle-mg';
+        else if (item.cluster === 'Cluster BTP') circleClass = 'circle-btp';
+        else if (item.cluster === 'Legadas') circleClass = 'circle-legadas';
+        else if (item.cluster === 'All Rede') circleClass = 'circle-All Rede';
 
         tr.innerHTML = `
           <td>
