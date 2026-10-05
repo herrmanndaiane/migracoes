@@ -686,6 +686,7 @@
     .circle-mg { background-color: var(--neon-pink); }
     .circle-btp { background-color: var(--neon-purple); }
     .circle-legadas { background-color: var(--neon-amber); }
+    .circle-allrede { background-color: var(--neon-green); }
 
     /* STATUS BADGES */
     .status-pill {
@@ -1010,6 +1011,7 @@
             <option value="Cluster MG">Cluster MG</option>
             <option value="Cluster BTP">Cluster BTP</option>
             <option value="Legadas">Legadas</option>
+            <option value="AllRede">All Rede</option>
           </select>
 
           <select id="select-status" class="input-field" required>
@@ -1044,6 +1046,7 @@
               <option value="Cluster MG">Cluster MG</option>
               <option value="Cluster BTP">Cluster BTP</option>
               <option value="Legadas">Legadas</option>
+              <option value="AllRede">All Rede</option>
             </select>
           </div>
         </div>
@@ -1171,6 +1174,7 @@
             <option value="Cluster MG">Cluster MG</option>
             <option value="Cluster BTP">Cluster BTP</option>
             <option value="Legadas">Legadas</option>
+             <option value="AllRede">All Rede</option>
           </select>
 
           <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, #7c3aed, #8b5cf6);">
@@ -1511,6 +1515,7 @@
         if (item.cluster === 'Cluster MG') circleClass = 'circle-mg';
         else if (item.cluster === 'Cluster BTP') circleClass = 'circle-btp';
         else if (item.cluster === 'Legadas') circleClass = 'circle-legadas';
+        else if (item.cluster === 'Allrede') circleClass = 'circle-allrede';
 
         tr.innerHTML = `
           <td>
