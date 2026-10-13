@@ -113,5 +113,15 @@
       "data": "2026-09-24"
     }
   ],
-  "fisicos": []
+  "fisicos": [
+    {
+      "id": 1791917104566,
+      "nome": "HP ProLiant",
+      "serial": "BL460c G6",
+      "finalidade": "Descarte",
+      "localidade": "Betim",
+      "cluster": "Cluster MG",
+      "data": "2026-10-13"
+    }
+  ]
 }
