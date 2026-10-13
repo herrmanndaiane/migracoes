@@ -115,6 +115,16 @@
   ],
   "fisicos": [
     {
+      "id": 1791917715258,
+      "nome": "PowerEdge R420",
+      "serial": "2Z0W6W1",
+      "quantidade": "1",
+      "finalidade": "Reutilizado",
+      "localidade": "Betim",
+      "cluster": "Cluster MG",
+      "data": "2026-10-13"
+    },
+    {
       "id": 1791917696156,
       "nome": "PowerEdge R420",
       "serial": "C9188X1",
