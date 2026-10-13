@@ -165,7 +165,7 @@
       <div class="brand-logo">
         <div class="brand-icon"><i class="fa-solid fa-server"></i></div>
         <div class="brand-info">
-          <h2>Quântico Cloud</h2>
+          <h2>BTP Cloud</h2>
           <span>Dashboard & Analytics</span>
         </div>
       </div>
@@ -292,8 +292,12 @@
 
       <section class="form-card">
         <div class="form-card-header"><i class="fa-solid fa-server" style="color: var(--neon-purple);"></i><h3 style="font-size: 15px; font-weight: 700;">Cadastrar Servidor Físico</h3></div>
+        
+        <!-- FORMULÁRIO ATUALIZADO COM O SERIAL NUMBER -->
         <form class="form-grid" id="form-cadastro-fisico">
           <input type="text" id="fisico-nome" class="input-field" placeholder="Host/Modelo" required>
+          <input type="text" id="fisico-serial" class="input-field" placeholder="Serial Number (ex: SN1234)" required>
+          
           <select id="fisico-finalidade" class="input-field" required>
             <option value="">Selecione a Finalidade</option>
             <option value="Reutilizado">Reutilizado</option>
@@ -326,7 +330,8 @@
           </div>
         </div>
         <table class="data-table">
-          <thead><tr><th>Servidor Físico</th><th>Finalidade</th><th>Localidade</th><th>Cluster Associated</th><th>Data Registro</th><th style="text-align: right;">Ações</th></tr></thead>
+          <!-- CABEÇALHO DA TABELA ATUALIZADO COM O SERIAL NUMBER -->
+          <thead><tr><th>Servidor Físico</th><th>Serial Number</th><th>Finalidade</th><th>Localidade</th><th>Cluster Associated</th><th>Data Registro</th><th style="text-align: right;">Ações</th></tr></thead>
           <tbody id="tabela-fisicos"></tbody>
         </table>
       </section>
@@ -366,7 +371,6 @@
       }
     }
 
-    // CARREGAR DADOS DO GITHUB (Sem bloqueio de CORS e com tratamento Base64)
     async function carregarDados() {
       try {
         const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}?t=${Date.now()}`;
@@ -392,7 +396,6 @@
         
         if (data.sha) fileSha = data.sha; 
 
-        // Removemos quebras de linha indesejadas do Base64 antes de decodificar
         const base64Limpo = data.content.replace(/\s/g, '');
         const conteudoDecodificado = decodeURIComponent(escape(atob(base64Limpo)));
         
@@ -408,7 +411,6 @@
       }
     }
 
-    // SALVAR DADOS NO GITHUB
     async function salvarNoGitHub() {
       const payload = { maquinas: maquinas, fisicos: fisicos };
       
@@ -574,7 +576,10 @@
       const finalidadeFiltro = document.getElementById('filtro-finalidade-select')?.value || 'TODOS';
 
       const listaFiltrada = fisicos.filter(item => {
-        const atendeNome = (item.nome && item.nome.toLowerCase().includes(termoBusca)) || (item.localidade && item.localidade.toLowerCase().includes(termoBusca));
+        const atendeNome = (item.nome && item.nome.toLowerCase().includes(termoBusca)) || 
+                           (item.localidade && item.localidade.toLowerCase().includes(termoBusca)) ||
+                           (item.serial && item.serial.toLowerCase().includes(termoBusca)); // Adicionado o Serial na Busca
+        
         const atendeFinalidade = (finalidadeFiltro === 'TODOS') || (item.finalidade === finalidadeFiltro);
         return atendeNome && atendeFinalidade;
       });
@@ -592,8 +597,11 @@
         else if (item.cluster === 'Legadas') circleClass = 'circle-legadas';
 
         const tr = document.createElement('tr');
+        
+        // LINHA DA TABELA ATUALIZADA COM O CAMPO SERIAL
         tr.innerHTML = `
           <td><div class="server-name-cell"><div class="server-icon"><i class="fa-solid fa-hard-drive"></i></div><div><strong>${item.nome || 'Sem nome'}</strong><div style="font-size:11px;color:var(--text-muted);">ID: #${item.id ? item.id.toString().slice(-4) : 'N/A'}</div></div></div></td>
+          <td style="font-family: monospace; color: var(--text-primary); font-size: 12px;">${item.serial || 'N/A'}</td>
           <td><span class="status-pill ${statusClass}"><i class="fa-solid ${statusIcon}"></i> ${item.finalidade || 'N/A'}</span></td>
           <td><i class="fa-solid fa-location-dot" style="color:var(--neon-pink);font-size:12px;"></i> ${item.localidade || 'N/A'}</td>
           <td><div class="cluster-tag"><span class="cluster-circle ${circleClass}"></span><span>${item.cluster || 'N/A'}</span></div></td>
@@ -623,14 +631,18 @@
 
       document.getElementById('form-cadastro-fisico')?.addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        // DADOS DO FORMULÁRIO ATUALIZADOS PARA PEGAR O SERIAL NUMBER
         fisicos.unshift({
           id: Date.now(),
           nome: document.getElementById('fisico-nome').value.trim(),
+          serial: document.getElementById('fisico-serial').value.trim(),
           finalidade: document.getElementById('fisico-finalidade').value,
           localidade: document.getElementById('fisico-localidade').value.trim(),
           cluster: document.getElementById('fisico-cluster').value,
           data: new Date().toISOString().split('T')[0]
         });
+        
         if (await salvarNoGitHub()) { renderizarFisicos(); e.target.reset(); alert('Físico salvo no GitHub!'); }
         else { fisicos.shift(); alert('Erro ao salvar no GitHub.'); }
       });
@@ -643,7 +655,6 @@
 
     document.addEventListener('DOMContentLoaded', iniciarApp);
 
-    // Atualização a cada 10 segundos
     setInterval(carregarDados, 10000); 
   </script>
 </body>
