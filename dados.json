@@ -115,6 +115,16 @@
   ],
   "fisicos": [
     {
+      "id": 1791917812687,
+      "nome": "PowerEdge R910",
+      "serial": "1GGVJN1",
+      "quantidade": "1",
+      "finalidade": "Reutilizado",
+      "localidade": "Betim",
+      "cluster": "Cluster MG",
+      "data": "2026-10-13"
+    },
+    {
       "id": 1791917799150,
       "nome": "Itautec",
       "serial": "MP223 S (CG)",
