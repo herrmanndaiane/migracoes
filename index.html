@@ -368,10 +368,9 @@
       }
     }
 
-    // CARREGAR DADOS DO GITHUB (COM SOLUÇÃO ANTI-CACHE)
+    // CARREGAR DADOS DO GITHUB (COM SOLUÇÃO ANTI-CACHE E CORREÇÃO DE BASE64)
     async function carregarDados() {
       try {
-        // O parâmetro ?t=${Date.now()} força o navegador a pegar a versão mais nova do GitHub
         const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}?t=${Date.now()}`;
         const response = await fetch(url, {
           headers: { 
@@ -382,14 +381,36 @@
         });
 
         if (response.status === 404) {
+          console.warn('Arquivo dados.json não encontrado no GitHub. Iniciando vazio.');
           maquinas = []; fisicos = [];
           renderizarDashboard(); renderizarFisicos();
           return;
         }
 
-        if (!response.ok) return;
+        if (!response.ok) {
+          console.error('Erro na permissão ou token do GitHub. Status:', response.status);
+          return;
+        }
 
         const data = await response.json();
+        
+        if (data.sha) fileSha = data.sha; 
+
+        // CORREÇÃO: O GitHub insere quebras de linha no Base64. Precisamos removê-las antes de ler!
+        const base64Limpo = data.content.replace(/\s/g, '');
+        const conteudoDecodificado = decodeURIComponent(escape(atob(base64Limpo)));
+        
+        const json = JSON.parse(conteudoDecodificado);
+
+        maquinas = json.maquinas || [];
+        fisicos = json.fisicos || [];
+
+        renderizarDashboard();
+        renderizarFisicos();
+      } catch (error) {
+        console.error('ERRO CRÍTICO ao processar os dados:', error);
+      }
+    }
         
         // Atualiza a assinatura (SHA) apenas se ela existir, garantindo sincronia
         if (data.sha) fileSha = data.sha; 
