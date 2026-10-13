@@ -333,25 +333,21 @@
     </div>
   </main>
 
-  <!-- ========================================================================= -->
-  <!-- JAVASCRIPT: PREENCHA AS SUAS CREDENCIAIS DO GITHUB LOGO ABAIXO          -->
-  <!-- ========================================================================= -->
   <script>
     
-    // 1) Divida o token que você gerou no GitHub nessas duas variáveis:
-    // (Lembre-se de substituir os valores abaixo pelas metades reais da SUA chave)
-    const tokenPart1 = "github_pat_11CL423PA0t31kCt8J2xxo_"; // Coloque a primeira metade aqui
-    const tokenPart2 = "77HU5GVQO44xj5Fh3dxGXPRSWeemdpIN9muasF7ql87YJUJOKML0rHzRhqt"; // Coloque o restante da chave aqui
+    // 1) O seu token dividido de forma limpa e correta:
+    const tokenPart1 = "github_pat_11CL423PA0t31kCt8J2xxo_"; 
+    const tokenPart2 = "77HU5GVQO44xj5Fh3dxGXPRSWeemdpIN9muasF7ql87YJUJOKML0rHzRhqt"; 
     
-    // 2) Ajuste o dono do repositório se for diferente:
+    // 2) Configuração do GitHub:
     const GITHUB_CONFIG = {
-      owner: 'herrmanndaiane', // Seu usuário do GitHub
-      repo: 'migracoes',       // O nome do repositório
-      path: 'dados.json',      // O arquivo JSON onde os dados serão salvos
+      owner: 'herrmanndaiane', 
+      repo: 'migracoes',       
+      path: 'dados.json',      
       token: tokenPart1 + tokenPart2 
     };
 
-    let fileSha = ''; // Necessário para atualizar o arquivo no GitHub sem dar erro de conflito
+    let fileSha = ''; 
     let maquinas = [];
     let fisicos = [];
     let chartGeral = null, chartBlink = null, chartMg = null;
@@ -368,7 +364,7 @@
       }
     }
 
-    // CARREGAR DADOS DO GITHUB (COM SOLUÇÃO ANTI-CACHE E CORREÇÃO DE BASE64)
+    // CARREGAR DADOS DO GITHUB (Código corrigido e limpo)
     async function carregarDados() {
       try {
         const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}?t=${Date.now()}`;
@@ -396,7 +392,7 @@
         
         if (data.sha) fileSha = data.sha; 
 
-        // CORREÇÃO: O GitHub insere quebras de linha no Base64. Precisamos removê-las antes de ler!
+        // Limpeza do Base64
         const base64Limpo = data.content.replace(/\s/g, '');
         const conteudoDecodificado = decodeURIComponent(escape(atob(base64Limpo)));
         
@@ -411,29 +407,11 @@
         console.error('ERRO CRÍTICO ao processar os dados:', error);
       }
     }
-        
-        // Atualiza a assinatura (SHA) apenas se ela existir, garantindo sincronia
-        if (data.sha) fileSha = data.sha; 
-
-        // O GitHub devolve o conteúdo em Base64, precisamos decodificar e virar JSON
-        const conteudoDecodificado = decodeURIComponent(escape(atob(data.content)));
-        const json = JSON.parse(conteudoDecodificado);
-
-        maquinas = json.maquinas || [];
-        fisicos = json.fisicos || [];
-
-        renderizarDashboard();
-        renderizarFisicos();
-       catch (error) {
-        console.error('Erro de conexão ao carregar dados:', error);
-      }
-    }
 
     // SALVAR DADOS NO GITHUB
     async function salvarNoGitHub() {
       const payload = { maquinas: maquinas, fisicos: fisicos };
       
-      // Converte para texto e codifica para Base64 corretamente (mantendo acentos)
       const conteudoString = JSON.stringify(payload, null, 2);
       const base64Content = btoa(unescape(encodeURIComponent(conteudoString)));
 
@@ -442,7 +420,6 @@
         content: base64Content
       };
       
-      // Se o arquivo já existe, o GitHub obriga a passar o SHA para sobrescrever
       if (fileSha) bodyData.sha = fileSha;
 
       try {
