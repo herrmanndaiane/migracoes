@@ -115,6 +115,15 @@
   ],
   "fisicos": [
     {
+      "id": 1791917122122,
+      "nome": "IBM",
+      "serial": "7946-AC1",
+      "finalidade": "Descarte",
+      "localidade": "Betim",
+      "cluster": "Cluster MG",
+      "data": "2026-10-13"
+    },
+    {
       "id": 1791917104566,
       "nome": "HP ProLiant",
       "serial": "BL460c G6",
