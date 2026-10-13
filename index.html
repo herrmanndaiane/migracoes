@@ -333,13 +333,15 @@
     </div>
   </main>
 
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT E CREDENCIAIS DO GITHUB                                        -->
+  <!-- ========================================================================= -->
   <script>
     
-    // 1) O seu token dividido de forma limpa e correta:
+    // As duas metades exatas do seu token:
     const tokenPart1 = "github_pat_11CL423PA0t31kCt8J2xxo_"; 
     const tokenPart2 = "77HU5GVQO44xj5Fh3dxGXPRSWeemdpIN9muasF7ql87YJUJOKML0rHzRhqt"; 
     
-    // 2) Configuração do GitHub:
     const GITHUB_CONFIG = {
       owner: 'herrmanndaiane', 
       repo: 'migracoes',       
@@ -364,15 +366,13 @@
       }
     }
 
-    // CARREGAR DADOS DO GITHUB (Código corrigido e limpo)
+    // CARREGAR DADOS DO GITHUB (Sem bloqueio de CORS e com tratamento Base64)
     async function carregarDados() {
       try {
         const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}?t=${Date.now()}`;
         const response = await fetch(url, {
           headers: { 
-            'Authorization': `Bearer ${GITHUB_CONFIG.token}`,
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
+            'Authorization': `Bearer ${GITHUB_CONFIG.token}`
           }
         });
 
@@ -392,7 +392,7 @@
         
         if (data.sha) fileSha = data.sha; 
 
-        // Limpeza do Base64
+        // Removemos quebras de linha indesejadas do Base64 antes de decodificar
         const base64Limpo = data.content.replace(/\s/g, '');
         const conteudoDecodificado = decodeURIComponent(escape(atob(base64Limpo)));
         
