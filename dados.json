@@ -115,6 +115,16 @@
   ],
   "fisicos": [
     {
+      "id": 1791917764826,
+      "nome": "PowerEdge R710",
+      "serial": "4M6YJN1",
+      "quantidade": "1",
+      "finalidade": "Venda",
+      "localidade": "Betim",
+      "cluster": "Cluster MG",
+      "data": "2026-10-13"
+    },
+    {
       "id": 1791917749315,
       "nome": "PowerEdge R420",
       "serial": "2J6L9Q1",
