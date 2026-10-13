@@ -115,6 +115,16 @@
   ],
   "fisicos": [
     {
+      "id": 1791917799150,
+      "nome": "Itautec",
+      "serial": "MP223 S (CG)",
+      "quantidade": "2",
+      "finalidade": "Descarte",
+      "localidade": "Betim",
+      "cluster": "Cluster MG",
+      "data": "2026-10-13"
+    },
+    {
       "id": 1791917780043,
       "nome": "PowerEdge R710",
       "serial": "BBDBWL1",
