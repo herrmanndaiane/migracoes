@@ -115,6 +115,15 @@
   ],
   "fisicos": [
     {
+      "id": 1791917154746,
+      "nome": "PowerEdge R230",
+      "serial": "GB2B3N2",
+      "finalidade": "Venda",
+      "localidade": "Betim",
+      "cluster": "Cluster MG",
+      "data": "2026-10-13"
+    },
+    {
       "id": 1791917139716,
       "nome": "HP ProLiant",
       "serial": "DL380 G7",
