@@ -153,6 +153,8 @@
     .status-venda { background: rgba(139, 92, 246, 0.12); color: var(--neon-purple); border: 1px solid rgba(139, 92, 246, 0.25); }
     .action-btn-delete { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; padding: 6px; border-radius: 6px; transition: all 0.2s; }
     .action-btn-delete:hover { color: var(--neon-pink); background: rgba(255, 45, 135, 0.1); }
+    .action-btn-edit { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; padding: 6px; border-radius: 6px; transition: all 0.2s; }
+    .action-btn-edit:hover { color: var(--neon-blue); background: rgba(59, 130, 246, 0.1); }
     
     .action-btn-vms { background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3); color: var(--neon-purple); cursor: pointer; font-size: 12px; padding: 6px 10px; border-radius: 6px; transition: all 0.2s; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
     .action-btn-vms:hover { background: rgba(139, 92, 246, 0.3); color: #fff; }
@@ -162,15 +164,16 @@
     /* ESTILOS DO MODAL PARA VMs */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
     .modal-overlay.active { display: flex; }
-    .modal-content { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 24px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
+    .modal-content { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 24px; width: 100%; max-width: 700px; max-height: 90vh; overflow-y: auto; }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .btn-close { background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; }
     .btn-close:hover { color: var(--neon-pink); }
-    .vm-list { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
-    .vm-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-input); padding: 12px; border-radius: 8px; border: 1px solid var(--border-subtle); }
-    .vm-item-info { display: flex; flex-direction: column; gap: 4px; }
-    .vm-item-nome { font-weight: 600; font-size: 13px; color: var(--text-primary); }
-    .vm-item-ip { font-size: 11px; color: var(--neon-cyan); font-family: monospace; }
+    .vm-list { margin-top: 10px; display: flex; flex-direction: column; gap: 10px; }
+    .vm-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-input); padding: 16px; border-radius: 8px; border: 1px solid var(--border-subtle); }
+    .vm-item-nome { font-weight: 600; font-size: 14px; color: var(--text-primary); }
+    
+    .vm-badges-container { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .vm-badge { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 4px; background: #202434; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; }
   </style>
 </head>
 <body>
@@ -193,7 +196,6 @@
         <button class="nav-item" id="nav-btn-fisicos" onclick="trocarAba('fisicos')">
           <i class="fa-solid fa-hard-drive"></i><span>Servidores Físicos</span>
         </button>
-        <!-- NOVO BOTÃO: AMBIENTES LEGADOS -->
         <button class="nav-item" id="nav-btn-legados" onclick="trocarAba('legados')">
           <i class="fa-solid fa-network-wired"></i><span>Ambientes Legados</span>
         </button>
@@ -370,20 +372,55 @@
         <div class="kpi-card"><div class="kpi-header"><div class="kpi-title-wrap"><div class="kpi-icon icon-purple"><i class="fa-solid fa-desktop"></i></div><span class="kpi-label">Servidores Virtuais</span></div></div><div class="kpi-content"><div><div class="kpi-value" style="color: var(--neon-purple);" id="kpi-legados-vms">0</div><span class="kpi-badge badge-purple" style="margin-top: 6px;">VMs Hospedadas</span></div></div></div>
       </section>
 
-      <section class="form-card">
+      <!-- FORMULÁRIO: SERVIDOR FÍSICO LEGADO -->
+      <section class="form-card" id="secao-form-legado">
         <div class="form-card-header"><i class="fa-solid fa-network-wired" style="color: var(--neon-cyan);"></i><h3 style="font-size: 15px; font-weight: 700;">Cadastrar Servidor Físico Legado</h3></div>
-        
         <form class="form-grid" id="form-cadastro-legado">
           <input type="text" id="legado-operacao" class="input-field" placeholder="Operação Legada (ex: ERP Antigo)" required>
-          <input type="text" id="legado-identificacao" class="input-field" placeholder="Identificação (ex: SRV-LEG-01)" required>
+          <input type="text" id="legado-identificacao" class="input-field" placeholder="Identificação Host (ex: SRV-LEG-01)" required>
           <input type="text" id="legado-modelo" class="input-field" placeholder="Modelo do Servidor" required>
           <input type="text" id="legado-ips" class="input-field" placeholder="IPs de acesso (ex: 10.0.0.5)" required>
           <input type="text" id="legado-regiao" class="input-field" placeholder="Região (Cidade/Estado)" required>
           
-          <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, #00d2d3, #3b82f6);"><i class="fa-solid fa-plus"></i> Cadastrar</button>
+          <select id="legado-zabbix" class="input-field" required>
+            <option value="">Monitoramento Zabbix BTP</option>
+            <option value="Sim">Sim (Ativo)</option>
+            <option value="Não">Não (Inativo)</option>
+          </select>
+          
+          <button type="submit" id="btn-submit-legado" class="btn-submit" style="background: linear-gradient(135deg, #00d2d3, #3b82f6);"><i class="fa-solid fa-plus"></i> Cadastrar Físico</button>
         </form>
       </section>
 
+      <!-- NOVO FORMULÁRIO: MÁQUINA VIRTUAL (SUBDIVISÃO) -->
+      <section class="form-card" id="secao-form-vm" style="border-top: 4px solid var(--neon-purple);">
+        <div class="form-card-header"><i class="fa-solid fa-desktop" style="color: var(--neon-purple);"></i><h3 style="font-size: 15px; font-weight: 700;">Cadastrar Servidor Virtual (VM)</h3></div>
+        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Vincule a nova máquina virtual a um Servidor Físico (Host) já cadastrado acima.</p>
+        
+        <form class="form-grid" id="form-cadastro-vm-main">
+          <!-- Campo Dinâmico (Dropdown de Hosts) -->
+          <select id="vm-main-host" class="input-field" style="border-color: var(--neon-purple);" required>
+            <option value="">Selecione a Identificação do Host...</option>
+          </select>
+          
+          <input type="text" id="vm-main-nome" class="input-field" placeholder="Nome VM" required>
+          <input type="text" id="vm-main-memoria" class="input-field" placeholder="Memória (ex: 16GB)" required>
+          <input type="number" id="vm-main-vcpu" class="input-field" placeholder="vCPU (ex: 4)" required min="1">
+          <input type="text" id="vm-main-disco" class="input-field" placeholder="Disco (ex: 500GB)" required>
+          <input type="text" id="vm-main-ip" class="input-field" placeholder="IP da VM" required>
+          <input type="text" id="vm-main-gconf" class="input-field" placeholder="GCONF" required>
+          
+          <select id="vm-main-status" class="input-field" required>
+            <option value="">Status da VM</option>
+            <option value="Ligado">Ligado</option>
+            <option value="Desligado">Desligado</option>
+          </select>
+
+          <button type="submit" id="btn-submit-vm-main" class="btn-submit" style="background: linear-gradient(135deg, #8b5cf6, #ff2d87);"><i class="fa-solid fa-plus"></i> Cadastrar VM</button>
+        </form>
+      </section>
+
+      <!-- TABELA: AMBIENTES LEGADOS -->
       <section class="table-card">
         <div class="table-top-bar">
           <div class="table-title-area"><h3>Inventário de Ambientes Legados</h3><span class="table-badge-counter" id="table-legados-count">0 registos</span></div>
@@ -392,7 +429,7 @@
           </div>
         </div>
         <table class="data-table">
-          <thead><tr><th>Identificação & Operação</th><th>Modelo Físico</th><th>IPs de Acesso</th><th>Região</th><th>Qtd. VMs</th><th style="text-align: right;">Ações / VMs</th></tr></thead>
+          <thead><tr><th>Identificação & Operação</th><th>Modelo Físico</th><th>IPs de Acesso</th><th>Região</th><th>Zabbix BTP</th><th>Qtd. VMs</th><th style="text-align: right;">Ações / VMs</th></tr></thead>
           <tbody id="tabela-legados"></tbody>
         </table>
       </section>
@@ -400,33 +437,21 @@
 
   </main>
 
-  <!-- MODAL PARA MÁQUINAS VIRTUAIS DO LEGADO -->
+  <!-- MODAL PARA LISTAGEM E EDIÇÃO DAS VMs -->
   <div class="modal-overlay" id="modal-vms">
     <div class="modal-content">
       <div class="modal-header">
         <h3 style="font-size: 16px; font-weight: 700;"><i class="fa-solid fa-desktop" style="color: var(--neon-purple); margin-right: 8px;"></i> Servidores Virtuais Hospedados</h3>
         <button class="btn-close" onclick="fecharModalVMs()"><i class="fa-solid fa-xmark"></i></button>
       </div>
+      <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">Visualização das VMs alocadas neste Host Físico.</p>
       
-      <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Adicione servidores virtuais hospedados neste servidor físico legado.</p>
-      
-      <form class="form-grid" id="form-cadastro-vm" style="margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--border-subtle);">
-        <input type="text" id="vm-nome" class="input-field" placeholder="Nome da VM (ex: VM-ERP-DB)" required>
-        <input type="text" id="vm-ip" class="input-field" placeholder="IP da VM (ex: 10.0.0.25)" required>
-        <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, #8b5cf6, #ff2d87);"><i class="fa-solid fa-plus"></i> Add VM</button>
-      </form>
-
-      <div id="lista-vms-modal" class="vm-list">
-        <!-- Lista de VMs injetada pelo JS -->
-      </div>
+      <!-- Container injetado pelo JavaScript -->
+      <div id="lista-vms-modal" class="vm-list"></div>
     </div>
   </div>
 
-  <!-- ========================================================================= -->
-  <!-- JAVASCRIPT E CREDENCIAIS DO GITHUB                                        -->
-  <!-- ========================================================================= -->
   <script>
-    
     // As duas metades exatas do seu token:
     const tokenPart1 = "github_pat_11CL423PA0t31kCt8J2xxo_"; 
     const tokenPart2 = "77HU5GVQO44xj5Fh3dxGXPRSWeemdpIN9muasF7ql87YJUJOKML0rHzRhqt"; 
@@ -441,8 +466,13 @@
     let fileSha = ''; 
     let maquinas = [];
     let fisicos = [];
-    let legados = []; // Nova Array para os Legados
-    let serverLegadoAtualId = null; // Variável para controlar qual Servidor Legado está aberto no modal
+    let legados = []; 
+    
+    // Variáveis de controle para Edição
+    let editLegadoId = null; 
+    let editVmId = null;
+    let editVmHostId = null;
+    let serverLegadoAtualId = null; // Para saber qual host está aberto no Modal
     
     let chartGeral = null, chartBlink = null, chartMg = null;
 
@@ -466,22 +496,16 @@
       try {
         const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}?t=${Date.now()}`;
         const response = await fetch(url, {
-          headers: { 
-            'Authorization': `Bearer ${GITHUB_CONFIG.token}`
-          }
+          headers: { 'Authorization': `Bearer ${GITHUB_CONFIG.token}` }
         });
 
         if (response.status === 404) {
-          console.warn('Arquivo dados.json não encontrado no GitHub. Iniciando vazio.');
           maquinas = []; fisicos = []; legados = [];
-          renderizarDashboard(); renderizarFisicos(); renderizarLegados();
+          renderizarDashboard(); renderizarFisicos(); renderizarLegados(); atualizarSelectHostsLegados();
           return;
         }
 
-        if (!response.ok) {
-          console.error('Erro na permissão ou token do GitHub. Status:', response.status);
-          return;
-        }
+        if (!response.ok) return;
 
         const data = await response.json();
         if (data.sha) fileSha = data.sha; 
@@ -492,37 +516,33 @@
 
         maquinas = json.maquinas || [];
         fisicos = json.fisicos || [];
-        legados = json.legados || []; // Carrega os legados
+        legados = json.legados || []; 
 
         renderizarDashboard();
         renderizarFisicos();
         renderizarLegados();
+        atualizarSelectHostsLegados(); // Preenche o dropdown do formulário de VMs
       } catch (error) {
-        console.error('ERRO CRÍTICO ao processar os dados:', error);
+        console.error('Erro:', error);
       }
     }
 
     async function salvarNoGitHub() {
       const payload = { maquinas: maquinas, fisicos: fisicos, legados: legados };
-      
       const conteudoString = JSON.stringify(payload, null, 2);
       const base64Content = btoa(unescape(encodeURIComponent(conteudoString)));
 
       const bodyData = {
-        message: "Atualização automática de dados via Dashboard",
+        message: "Atualização de dados",
         content: base64Content
       };
-      
       if (fileSha) bodyData.sha = fileSha;
 
       try {
         const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`;
         const response = await fetch(url, {
           method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${GITHUB_CONFIG.token}`,
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Authorization': `Bearer ${GITHUB_CONFIG.token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify(bodyData)
         });
 
@@ -533,36 +553,108 @@
         }
         return false;
       } catch (error) {
-        console.error('Erro ao salvar no GitHub:', error);
         return false;
       }
     }
 
     async function removerMaquina(id) {
-      if (!confirm('Deseja realmente remover este servidor da migração?')) return;
+      if (!confirm('Excluir este servidor?')) return;
       maquinas = maquinas.filter(m => m.id !== id);
-      const sucesso = await salvarNoGitHub();
-      if (sucesso) renderizarDashboard();
-      else { alert('Erro ao excluir no GitHub.'); carregarDados(); }
+      if (await salvarNoGitHub()) renderizarDashboard(); else carregarDados();
     }
 
     async function removerFisico(id) {
-      if (!confirm('Deseja realmente remover este servidor físico?')) return;
+      if (!confirm('Excluir este servidor físico?')) return;
       fisicos = fisicos.filter(f => f.id !== id);
-      const sucesso = await salvarNoGitHub();
-      if (sucesso) renderizarFisicos();
-      else { alert('Erro ao excluir no GitHub.'); carregarDados(); }
+      if (await salvarNoGitHub()) renderizarFisicos(); else carregarDados();
+    }
+
+    // --- FUNÇÕES DE FÍSICOS LEGADOS ---
+    
+    function atualizarSelectHostsLegados() {
+      const select = document.getElementById('vm-main-host');
+      if (!select) return;
+      const valorAtual = select.value;
+      
+      select.innerHTML = '<option value="">Selecione a Identificação do Host Físico...</option>';
+      legados.forEach(l => {
+        const opt = document.createElement('option');
+        opt.value = l.id;
+        opt.textContent = `${l.identificacao} (${l.operacao})`;
+        select.appendChild(opt);
+      });
+      
+      if (valorAtual) select.value = valorAtual;
+    }
+
+    function editarLegado(id) {
+      const host = legados.find(l => l.id === id);
+      if (!host) return;
+
+      document.getElementById('legado-operacao').value = host.operacao || '';
+      document.getElementById('legado-identificacao').value = host.identificacao || '';
+      document.getElementById('legado-modelo').value = host.modelo || '';
+      document.getElementById('legado-ips').value = host.ips || '';
+      document.getElementById('legado-regiao').value = host.regiao || '';
+      document.getElementById('legado-zabbix').value = host.zabbix || '';
+
+      editLegadoId = id; // Entra no modo de edição
+      document.getElementById('btn-submit-legado').innerHTML = '<i class="fa-solid fa-pen"></i> Salvar Alterações';
+      
+      // Rola a tela até o formulário
+      document.getElementById('secao-form-legado').scrollIntoView({ behavior: 'smooth' });
     }
 
     async function removerLegado(id) {
-      if (!confirm('Deseja realmente remover este Servidor Físico Legado e todas as suas VMs?')) return;
+      if (!confirm('Aviso: Isso excluirá este Servidor Legado E TAMBÉM todas as VMs associadas a ele. Continuar?')) return;
       legados = legados.filter(l => l.id !== id);
-      const sucesso = await salvarNoGitHub();
-      if (sucesso) renderizarLegados();
-      else { alert('Erro ao excluir no GitHub.'); carregarDados(); }
+      if (await salvarNoGitHub()) {
+        renderizarLegados();
+        atualizarSelectHostsLegados();
+      } else { carregarDados(); }
     }
 
-    // --- FUNÇÕES DO MODAL DE VMs ---
+    // --- FUNÇÕES DE VMs (MÁQUINAS VIRTUAIS) ---
+
+    function editarVM(hostId, vmId) {
+      const host = legados.find(l => l.id === hostId);
+      if (!host) return;
+      const vm = host.virtuais.find(v => v.id === vmId);
+      if (!vm) return;
+
+      fecharModalVMs(); // Fecha a janela do modal para editar na tela principal
+
+      document.getElementById('vm-main-host').value = hostId;
+      document.getElementById('vm-main-nome').value = vm.nome || '';
+      document.getElementById('vm-main-memoria').value = vm.memoria || '';
+      document.getElementById('vm-main-vcpu').value = vm.vcpu || '';
+      document.getElementById('vm-main-disco').value = vm.disco || '';
+      document.getElementById('vm-main-ip').value = vm.ip || '';
+      document.getElementById('vm-main-gconf').value = vm.gconf || '';
+      document.getElementById('vm-main-status').value = vm.statusLigado || '';
+
+      editVmId = vmId; 
+      editVmHostId = hostId;
+      document.getElementById('btn-submit-vm-main').innerHTML = '<i class="fa-solid fa-pen"></i> Salvar Alterações';
+      
+      // Rola a tela até o formulário da VM
+      document.getElementById('secao-form-vm').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function removerVMLegado(hostId, vmId) {
+      if (!confirm('Excluir esta VM?')) return;
+      
+      const servidor = legados.find(l => l.id === hostId);
+      if (servidor && servidor.virtuais) {
+        servidor.virtuais = servidor.virtuais.filter(v => v.id !== vmId);
+        if (await salvarNoGitHub()) {
+          renderizarListaVMsModal(); // Recarrega a lista dentro do Modal aberto
+        } else { alert('Erro ao excluir VM.'); }
+      }
+    }
+
+    // --- FUNÇÕES DO MODAL ---
+
     function abrirModalVMs(idLegado) {
       serverLegadoAtualId = idLegado;
       document.getElementById('modal-vms').classList.add('active');
@@ -572,7 +664,7 @@
     function fecharModalVMs() {
       document.getElementById('modal-vms').classList.remove('active');
       serverLegadoAtualId = null;
-      renderizarLegados(); // Atualiza a contagem de VMs na tabela principal
+      renderizarLegados(); // Atualiza a contagem na tabela de trás
     }
 
     function renderizarListaVMsModal() {
@@ -581,42 +673,43 @@
       
       const servidor = legados.find(l => l.id === serverLegadoAtualId);
       if (!servidor || !servidor.virtuais || servidor.virtuais.length === 0) {
-        listaContainer.innerHTML = '<div style="color: var(--text-muted); font-size: 12px; text-align: center;">Nenhum servidor virtual hospedado.</div>';
+        listaContainer.innerHTML = '<div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px;">Nenhum servidor virtual cadastrado neste Host.</div>';
         return;
       }
 
       servidor.virtuais.forEach(vm => {
+        const statusCorBg = vm.statusLigado === 'Ligado' ? 'rgba(16,185,129,0.15)' : 'rgba(255,45,135,0.15)';
+        const statusCorTxt = vm.statusLigado === 'Ligado' ? 'var(--neon-green)' : 'var(--neon-pink)';
+
         const item = document.createElement('div');
         item.className = 'vm-item';
+        
+        // Estrutura bonita de exibição para a VM dentro do modal
         item.innerHTML = `
-          <div class="vm-item-info">
-            <span class="vm-item-nome"><i class="fa-solid fa-server" style="color: var(--neon-purple); margin-right: 6px;"></i>${vm.nome}</span>
-            <span class="vm-item-ip">IP: ${vm.ip}</span>
+          <div style="width: 100%;">
+            <div style="display:flex; justify-content:space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; margin-bottom: 8px;">
+              <span class="vm-item-nome"><i class="fa-solid fa-server" style="color: var(--neon-purple); margin-right: 6px;"></i>${vm.nome || 'VM sem nome'}</span>
+              <div>
+                <button class="action-btn-edit" title="Editar" onclick="editarVM(${servidor.id}, ${vm.id})"><i class="fa-solid fa-pen"></i></button>
+                <button class="action-btn-delete" title="Excluir" onclick="removerVMLegado(${servidor.id}, ${vm.id})"><i class="fa-solid fa-trash-can"></i></button>
+              </div>
+            </div>
+            <div class="vm-badges-container">
+              <span class="vm-badge"><i class="fa-solid fa-microchip"></i> vCPU: ${vm.vcpu || 'N/A'}</span>
+              <span class="vm-badge"><i class="fa-solid fa-memory"></i> RAM: ${vm.memoria || 'N/A'}</span>
+              <span class="vm-badge"><i class="fa-solid fa-hard-drive"></i> Disco: ${vm.disco || 'N/A'}</span>
+              <span class="vm-badge" style="color: var(--neon-cyan);"><i class="fa-solid fa-globe"></i> IP: ${vm.ip || 'N/A'}</span>
+              <span class="vm-badge"><i class="fa-solid fa-gear"></i> GCONF: ${vm.gconf || 'N/A'}</span>
+              <span class="vm-badge" style="background: ${statusCorBg}; color: ${statusCorTxt};"><i class="fa-solid fa-power-off"></i> ${vm.statusLigado || 'N/A'}</span>
+            </div>
           </div>
-          <button class="action-btn-delete" title="Excluir VM" onclick="removerVMLegado(${vm.id})">
-            <i class="fa-solid fa-trash-can"></i>
-          </button>
         `;
         listaContainer.appendChild(item);
       });
     }
 
-    async function removerVMLegado(vmId) {
-      if (!confirm('Excluir esta VM?')) return;
-      
-      const servidor = legados.find(l => l.id === serverLegadoAtualId);
-      if (servidor) {
-        servidor.virtuais = servidor.virtuais.filter(v => v.id !== vmId);
-        const sucesso = await salvarNoGitHub();
-        if (sucesso) {
-          renderizarListaVMsModal();
-        } else {
-          alert('Erro ao excluir VM.');
-        }
-      }
-    }
+    // --- RENDERS GERAIS ---
 
-    // --- RENDERS ---
     function inicializarGraficos() {
       if (typeof Chart === 'undefined') return;
       const ctxGeral = document.getElementById('chartStatusDonut').getContext('2d');
@@ -791,17 +884,31 @@
         const tr = document.createElement('tr');
         const qtdVms = item.virtuais ? item.virtuais.length : 0;
         
+        let zabbixHtml = '';
+        if (item.zabbix === 'Sim') {
+          zabbixHtml = '<span class="status-pill status-migrado" style="padding: 3px 8px; font-size: 10px;"><i class="fa-solid fa-circle-check"></i> Ativo</span>';
+        } else if (item.zabbix === 'Não') {
+          zabbixHtml = '<span class="status-pill status-descarte" style="padding: 3px 8px; font-size: 10px;"><i class="fa-solid fa-circle-xmark"></i> Inativo</span>';
+        } else {
+          zabbixHtml = '<span style="color: var(--text-muted); font-size: 11px;">N/A</span>';
+        }
+        
+        // ADICIONADO O BOTÃO "EDITAR" NA TABELA PRINCIPAL DE LEGADOS
         tr.innerHTML = `
           <td><div class="server-name-cell"><div class="server-icon" style="color: var(--neon-cyan);"><i class="fa-solid fa-network-wired"></i></div><div><strong>${item.identificacao || 'N/A'}</strong><div style="font-size:11px;color:var(--text-muted);">${item.operacao || 'N/A'}</div></div></div></td>
           <td style="color: var(--text-primary); font-size: 12px;">${item.modelo || 'N/A'}</td>
           <td style="font-family: monospace; color: var(--text-secondary); font-size: 11px;">${item.ips || 'N/A'}</td>
           <td><i class="fa-solid fa-location-dot" style="color:var(--neon-pink);font-size:12px;"></i> ${item.regiao || 'N/A'}</td>
+          <td>${zabbixHtml}</td>
           <td style="font-weight: 600; color: var(--text-primary);"><span class="cluster-pill-badge" style="background: rgba(139, 92, 246, 0.15); color: var(--neon-purple);">${qtdVms} VMs</span></td>
           <td style="text-align:right;">
             <button class="action-btn-vms" title="Gerenciar VMs" onclick="abrirModalVMs(${item.id})">
               <i class="fa-solid fa-desktop"></i> VMs
             </button>
-            <button class="action-btn-delete" style="margin-left: 8px;" title="Excluir" onclick="removerLegado(${item.id})">
+            <button class="action-btn-edit" style="margin-left: 4px;" title="Editar Host" onclick="editarLegado(${item.id})">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            <button class="action-btn-delete" title="Excluir Host" onclick="removerLegado(${item.id})">
               <i class="fa-solid fa-trash-can"></i>
             </button>
           </td>
@@ -814,7 +921,7 @@
       inicializarGraficos();
       carregarDados();
 
-      // Submit Cadastro Migração
+      // Submit Migrações
       document.getElementById('form-cadastro')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         maquinas.unshift({
@@ -828,7 +935,7 @@
         else { maquinas.shift(); alert('Erro ao salvar no GitHub.'); }
       });
 
-      // Submit Cadastro Físicos
+      // Submit Físicos
       document.getElementById('form-cadastro-fisico')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         fisicos.unshift({
@@ -845,49 +952,97 @@
         else { fisicos.shift(); alert('Erro ao salvar no GitHub.'); }
       });
 
-      // Submit Cadastro Legado
+      // --- SUBMIT DO SERVIDOR FÍSICO LEGADO (NOVO/EDIÇÃO) ---
       document.getElementById('form-cadastro-legado')?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        legados.unshift({
-          id: Date.now(),
+        
+        const hostData = {
           operacao: document.getElementById('legado-operacao').value.trim(),
           identificacao: document.getElementById('legado-identificacao').value.trim(),
           modelo: document.getElementById('legado-modelo').value.trim(),
           ips: document.getElementById('legado-ips').value.trim(),
           regiao: document.getElementById('legado-regiao').value.trim(),
-          virtuais: [], // Inicia com o array de VMs vazio
-          data: new Date().toISOString().split('T')[0]
-        });
-        if (await salvarNoGitHub()) { renderizarLegados(); e.target.reset(); alert('Ambiente Legado salvo no GitHub!'); }
-        else { legados.shift(); alert('Erro ao salvar no GitHub.'); }
+          zabbix: document.getElementById('legado-zabbix').value
+        };
+
+        if (editLegadoId) {
+          // Atualiza registro existente
+          const hostIndex = legados.findIndex(l => l.id === editLegadoId);
+          if (hostIndex > -1) {
+            legados[hostIndex] = { ...legados[hostIndex], ...hostData };
+          }
+        } else {
+          // Cria novo registro
+          legados.unshift({
+            id: Date.now(),
+            ...hostData,
+            virtuais: [], 
+            data: new Date().toISOString().split('T')[0]
+          });
+        }
+        
+        if (await salvarNoGitHub()) { 
+          renderizarLegados(); 
+          atualizarSelectHostsLegados(); 
+          e.target.reset(); 
+          editLegadoId = null; // Zera o estado de edição
+          document.getElementById('btn-submit-legado').innerHTML = '<i class="fa-solid fa-plus"></i> Cadastrar Físico';
+          alert('Ambiente Legado salvo no GitHub!'); 
+        }
+        else { carregarDados(); alert('Erro ao salvar no GitHub.'); }
       });
 
-      // Submit Cadastro VM do Legado (Dentro do Modal)
-      document.getElementById('form-cadastro-vm')?.addEventListener('submit', async (e) => {
+      // --- SUBMIT DA VM (NOVO/EDIÇÃO) ---
+      document.getElementById('form-cadastro-vm-main')?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const servidor = legados.find(l => l.id === serverLegadoAtualId);
-        if (servidor) {
-          if(!servidor.virtuais) servidor.virtuais = [];
-          
-          const novaVM = {
-            id: Date.now(),
-            nome: document.getElementById('vm-nome').value.trim(),
-            ip: document.getElementById('vm-ip').value.trim()
-          };
-          
-          servidor.virtuais.unshift(novaVM);
-          
-          if (await salvarNoGitHub()) { 
-            renderizarListaVMsModal(); 
-            e.target.reset(); 
-          } else { 
-            servidor.virtuais.shift(); 
-            alert('Erro ao salvar VM no GitHub.'); 
+        
+        const hostIdSelecionado = parseInt(document.getElementById('vm-main-host').value);
+        const hostDestino = legados.find(l => l.id === hostIdSelecionado);
+        
+        if (!hostDestino) { alert('Selecione um Host válido!'); return; }
+        if (!hostDestino.virtuais) hostDestino.virtuais = [];
+        
+        const novaVM = {
+          id: editVmId || Date.now(), // Mantém ID se for edição
+          nome: document.getElementById('vm-main-nome').value.trim(),
+          memoria: document.getElementById('vm-main-memoria').value.trim(),
+          vcpu: document.getElementById('vm-main-vcpu').value.trim(),
+          disco: document.getElementById('vm-main-disco').value.trim(),
+          ip: document.getElementById('vm-main-ip').value.trim(),
+          gconf: document.getElementById('vm-main-gconf').value.trim(),
+          statusLigado: document.getElementById('vm-main-status').value
+        };
+
+        if (editVmId) {
+          // Lógica caso o usuário troque a VM de um Host para outro
+          if (editVmHostId !== hostIdSelecionado) {
+             const hostAntigo = legados.find(l => l.id === editVmHostId);
+             if (hostAntigo) hostAntigo.virtuais = hostAntigo.virtuais.filter(v => v.id !== editVmId); // Remove do antigo
+             hostDestino.virtuais.unshift(novaVM); // Add no novo
+          } else {
+             // Mesmo host, apenas atualiza a VM
+             const vmIndex = hostDestino.virtuais.findIndex(v => v.id === editVmId);
+             if (vmIndex > -1) hostDestino.virtuais[vmIndex] = novaVM;
           }
+        } else {
+          // Cadastro Novo
+          hostDestino.virtuais.unshift(novaVM);
+        }
+
+        if (await salvarNoGitHub()) { 
+          renderizarLegados(); // Atualiza a contagem de VMs da tabela principal
+          e.target.reset(); 
+          editVmId = null; 
+          editVmHostId = null;
+          document.getElementById('btn-submit-vm-main').innerHTML = '<i class="fa-solid fa-plus"></i> Cadastrar VM';
+          alert('Máquina Virtual salva no GitHub!'); 
+        } else { 
+          carregarDados();
+          alert('Erro ao salvar VM no GitHub.'); 
         }
       });
 
-      // Listeners de Busca
+      // Listeners
       document.getElementById('filtro-busca')?.addEventListener('input', renderizarDashboard);
       document.getElementById('filtro-cluster-select')?.addEventListener('change', renderizarDashboard);
       document.getElementById('filtro-busca-fisico')?.addEventListener('input', renderizarFisicos);
@@ -896,7 +1051,6 @@
     }
 
     document.addEventListener('DOMContentLoaded', iniciarApp);
-
     setInterval(carregarDados, 10000); 
   </script>
 </body>
