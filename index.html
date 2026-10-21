@@ -377,7 +377,8 @@
         <div class="form-card-header"><i class="fa-solid fa-network-wired" style="color: var(--neon-cyan);"></i><h3 style="font-size: 15px; font-weight: 700;">Cadastrar Servidor Físico Legado</h3></div>
         <form class="form-grid" id="form-cadastro-legado">
           <input type="text" id="legado-operacao" class="input-field" placeholder="Operação Legada (ex: ERP Antigo)" required>
-          <input type="text" id="legado-identificacao" class="input-field" placeholder="Identificação Host (ex: SRV-LEG-01)" required>
+          <input type="text" id="legado-nome-cluster" class="input-field" placeholder="Nome do Cluster (ex: Cluster Legado 01)" required>
+          <input type="number" id="legado-qtd-hosts" class="input-field" placeholder="Qtd. Hosts" required min="1" style="max-width: 100px;">
           <input type="text" id="legado-modelo" class="input-field" placeholder="Modelo do Servidor" required>
           <input type="text" id="legado-ips" class="input-field" placeholder="IPs de acesso (ex: 10.0.0.5)" required>
           <input type="text" id="legado-regiao" class="input-field" placeholder="Região (Cidade/Estado)" required>
@@ -400,7 +401,7 @@
         <form class="form-grid" id="form-cadastro-vm-main">
           <!-- Campo Dinâmico (Dropdown de Hosts) -->
           <select id="vm-main-host" class="input-field" style="border-color: var(--neon-purple);" required>
-            <option value="">Selecione a Identificação do Host...</option>
+            <option value="">Selecione o Nome do Cluster...</option>
           </select>
           
           <input type="text" id="vm-main-nome" class="input-field" placeholder="Nome VM" required>
@@ -429,7 +430,7 @@
           </div>
         </div>
         <table class="data-table">
-          <thead><tr><th>Identificação & Operação</th><th>Modelo Físico</th><th>IPs de Acesso</th><th>Região</th><th>Zabbix BTP</th><th>Qtd. VMs</th><th style="text-align: right;">Ações / VMs</th></tr></thead>
+          <thead><tr><th>Nome do Cluster & Operação</th><th>Qtd. Hosts</th><th>Modelo Físico</th><th>IPs de Acesso</th><th>Região</th><th>Zabbix BTP</th><th>Qtd. VMs</th><th style="text-align: right;">Ações / VMs</th></tr></thead>
           <tbody id="tabela-legados"></tbody>
         </table>
       </section>
@@ -576,11 +577,12 @@
       if (!select) return;
       const valorAtual = select.value;
       
-      select.innerHTML = '<option value="">Selecione a Identificação do Host Físico...</option>';
+      select.innerHTML = '<option value="">Selecione o Nome do Cluster...</option>';
       legados.forEach(l => {
         const opt = document.createElement('option');
         opt.value = l.id;
-        opt.textContent = `${l.identificacao} (${l.operacao})`;
+        const nomeClus = l.nomeCluster || l.identificacao || 'Sem Nome'; // Compatibilidade com dados antigos
+        opt.textContent = `${nomeClus} (${l.operacao})`;
         select.appendChild(opt);
       });
       
@@ -592,7 +594,8 @@
       if (!host) return;
 
       document.getElementById('legado-operacao').value = host.operacao || '';
-      document.getElementById('legado-identificacao').value = host.identificacao || '';
+      document.getElementById('legado-nome-cluster').value = host.nomeCluster || host.identificacao || '';
+      document.getElementById('legado-qtd-hosts').value = host.qtdHosts || '1';
       document.getElementById('legado-modelo').value = host.modelo || '';
       document.getElementById('legado-ips').value = host.ips || '';
       document.getElementById('legado-regiao').value = host.regiao || '';
@@ -673,7 +676,7 @@
       
       const servidor = legados.find(l => l.id === serverLegadoAtualId);
       if (!servidor || !servidor.virtuais || servidor.virtuais.length === 0) {
-        listaContainer.innerHTML = '<div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px;">Nenhum servidor virtual cadastrado neste Host.</div>';
+        listaContainer.innerHTML = '<div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px;">Nenhum servidor virtual cadastrado neste Cluster.</div>';
         return;
       }
 
@@ -872,7 +875,8 @@
       const termoBusca = (document.getElementById('filtro-busca-legado')?.value || '').toLowerCase();
 
       const listaFiltrada = legados.filter(item => {
-        return (item.identificacao && item.identificacao.toLowerCase().includes(termoBusca)) || 
+        const nomeClus = item.nomeCluster || item.identificacao || '';
+        return (nomeClus.toLowerCase().includes(termoBusca)) || 
                (item.operacao && item.operacao.toLowerCase().includes(termoBusca)) ||
                (item.modelo && item.modelo.toLowerCase().includes(termoBusca)) ||
                (item.regiao && item.regiao.toLowerCase().includes(termoBusca));
@@ -883,7 +887,10 @@
       listaFiltrada.forEach(item => {
         const tr = document.createElement('tr');
         const qtdVms = item.virtuais ? item.virtuais.length : 0;
+        const nomeClus = item.nomeCluster || item.identificacao || 'N/A';
+        const qtdHosts = item.qtdHosts || '1';
         
+        // CONSTRUÇÃO DO BADGE DO ZABBIX
         let zabbixHtml = '';
         if (item.zabbix === 'Sim') {
           zabbixHtml = '<span class="status-pill status-migrado" style="padding: 3px 8px; font-size: 10px;"><i class="fa-solid fa-circle-check"></i> Ativo</span>';
@@ -893,9 +900,9 @@
           zabbixHtml = '<span style="color: var(--text-muted); font-size: 11px;">N/A</span>';
         }
         
-        // ADICIONADO O BOTÃO "EDITAR" NA TABELA PRINCIPAL DE LEGADOS
         tr.innerHTML = `
-          <td><div class="server-name-cell"><div class="server-icon" style="color: var(--neon-cyan);"><i class="fa-solid fa-network-wired"></i></div><div><strong>${item.identificacao || 'N/A'}</strong><div style="font-size:11px;color:var(--text-muted);">${item.operacao || 'N/A'}</div></div></div></td>
+          <td><div class="server-name-cell"><div class="server-icon" style="color: var(--neon-cyan);"><i class="fa-solid fa-network-wired"></i></div><div><strong>${nomeClus}</strong><div style="font-size:11px;color:var(--text-muted);">${item.operacao || 'N/A'}</div></div></div></td>
+          <td style="font-weight: 600; color: var(--text-primary);">${qtdHosts}</td>
           <td style="color: var(--text-primary); font-size: 12px;">${item.modelo || 'N/A'}</td>
           <td style="font-family: monospace; color: var(--text-secondary); font-size: 11px;">${item.ips || 'N/A'}</td>
           <td><i class="fa-solid fa-location-dot" style="color:var(--neon-pink);font-size:12px;"></i> ${item.regiao || 'N/A'}</td>
@@ -958,7 +965,8 @@
         
         const hostData = {
           operacao: document.getElementById('legado-operacao').value.trim(),
-          identificacao: document.getElementById('legado-identificacao').value.trim(),
+          nomeCluster: document.getElementById('legado-nome-cluster').value.trim(),
+          qtdHosts: document.getElementById('legado-qtd-hosts').value.trim(),
           modelo: document.getElementById('legado-modelo').value.trim(),
           ips: document.getElementById('legado-ips').value.trim(),
           regiao: document.getElementById('legado-regiao').value.trim(),
