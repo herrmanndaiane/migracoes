@@ -153,8 +153,24 @@
     .status-venda { background: rgba(139, 92, 246, 0.12); color: var(--neon-purple); border: 1px solid rgba(139, 92, 246, 0.25); }
     .action-btn-delete { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; padding: 6px; border-radius: 6px; transition: all 0.2s; }
     .action-btn-delete:hover { color: var(--neon-pink); background: rgba(255, 45, 135, 0.1); }
+    
+    .action-btn-vms { background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3); color: var(--neon-purple); cursor: pointer; font-size: 12px; padding: 6px 10px; border-radius: 6px; transition: all 0.2s; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+    .action-btn-vms:hover { background: rgba(139, 92, 246, 0.3); color: #fff; }
 
     @media (max-width: 1100px) { body { flex-direction: column; } aside.sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border-subtle); } .kpi-grid { grid-template-columns: repeat(2, 1fr); } .charts-grid { grid-template-columns: 1fr; } .form-grid { grid-template-columns: 1fr; } }
+    
+    /* ESTILOS DO MODAL PARA VMs */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+    .modal-overlay.active { display: flex; }
+    .modal-content { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 24px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .btn-close { background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; }
+    .btn-close:hover { color: var(--neon-pink); }
+    .vm-list { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+    .vm-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-input); padding: 12px; border-radius: 8px; border: 1px solid var(--border-subtle); }
+    .vm-item-info { display: flex; flex-direction: column; gap: 4px; }
+    .vm-item-nome { font-weight: 600; font-size: 13px; color: var(--text-primary); }
+    .vm-item-ip { font-size: 11px; color: var(--neon-cyan); font-family: monospace; }
   </style>
 </head>
 <body>
@@ -176,6 +192,10 @@
         </button>
         <button class="nav-item" id="nav-btn-fisicos" onclick="trocarAba('fisicos')">
           <i class="fa-solid fa-hard-drive"></i><span>Servidores Físicos</span>
+        </button>
+        <!-- NOVO BOTÃO: AMBIENTES LEGADOS -->
+        <button class="nav-item" id="nav-btn-legados" onclick="trocarAba('legados')">
+          <i class="fa-solid fa-network-wired"></i><span>Ambientes Legados</span>
         </button>
       </div>
     </div>
@@ -293,7 +313,6 @@
       <section class="form-card">
         <div class="form-card-header"><i class="fa-solid fa-server" style="color: var(--neon-purple);"></i><h3 style="font-size: 15px; font-weight: 700;">Cadastrar Servidor Físico</h3></div>
         
-        <!-- FORMULÁRIO ATUALIZADO COM OS CAMPOS SERIAL NUMBER E QUANTIDADE -->
         <form class="form-grid" id="form-cadastro-fisico">
           <input type="text" id="fisico-nome" class="input-field" placeholder="Host/Modelo" required>
           <input type="text" id="fisico-serial" class="input-field" placeholder="Serial Number (ex: SN1234)" required>
@@ -331,13 +350,77 @@
           </div>
         </div>
         <table class="data-table">
-          <!-- CABEÇALHO DA TABELA ATUALIZADO COM QUANTIDADE -->
           <thead><tr><th>Servidor Físico</th><th>Serial Number</th><th>Qtd.</th><th>Finalidade</th><th>Localidade</th><th>Cluster Associated</th><th>Data Registro</th><th style="text-align: right;">Ações</th></tr></thead>
           <tbody id="tabela-fisicos"></tbody>
         </table>
       </section>
     </div>
+
+    <!-- ABA AMBIENTES LEGADOS -->
+    <div id="aba-legados" class="tab-page">
+      <div class="top-header">
+        <div class="breadcrumb">
+          <i class="fa-solid fa-house"></i><span>Home</span><i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i>
+          <span>Gestão</span><i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i><span class="active">Ambientes Legados</span>
+        </div>
+      </div>
+
+      <section class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-header"><div class="kpi-title-wrap"><div class="kpi-icon icon-total"><i class="fa-solid fa-network-wired"></i></div><span class="kpi-label">Ambientes Físicos (Legados)</span></div></div><div class="kpi-content"><div><div class="kpi-value" id="kpi-legados-total">0</div><span class="kpi-badge badge-up" style="margin-top: 6px;">Servidores Host</span></div></div></div>
+        <div class="kpi-card"><div class="kpi-header"><div class="kpi-title-wrap"><div class="kpi-icon icon-purple"><i class="fa-solid fa-desktop"></i></div><span class="kpi-label">Servidores Virtuais</span></div></div><div class="kpi-content"><div><div class="kpi-value" style="color: var(--neon-purple);" id="kpi-legados-vms">0</div><span class="kpi-badge badge-purple" style="margin-top: 6px;">VMs Hospedadas</span></div></div></div>
+      </section>
+
+      <section class="form-card">
+        <div class="form-card-header"><i class="fa-solid fa-network-wired" style="color: var(--neon-cyan);"></i><h3 style="font-size: 15px; font-weight: 700;">Cadastrar Servidor Físico Legado</h3></div>
+        
+        <form class="form-grid" id="form-cadastro-legado">
+          <input type="text" id="legado-operacao" class="input-field" placeholder="Operação Legada (ex: ERP Antigo)" required>
+          <input type="text" id="legado-identificacao" class="input-field" placeholder="Identificação (ex: SRV-LEG-01)" required>
+          <input type="text" id="legado-modelo" class="input-field" placeholder="Modelo do Servidor" required>
+          <input type="text" id="legado-ips" class="input-field" placeholder="IPs de acesso (ex: 10.0.0.5)" required>
+          <input type="text" id="legado-regiao" class="input-field" placeholder="Região (Cidade/Estado)" required>
+          
+          <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, #00d2d3, #3b82f6);"><i class="fa-solid fa-plus"></i> Cadastrar</button>
+        </form>
+      </section>
+
+      <section class="table-card">
+        <div class="table-top-bar">
+          <div class="table-title-area"><h3>Inventário de Ambientes Legados</h3><span class="table-badge-counter" id="table-legados-count">0 registos</span></div>
+          <div class="table-tools">
+            <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="filtro-busca-legado" placeholder="Filtrar legados..."></div>
+          </div>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>Identificação & Operação</th><th>Modelo Físico</th><th>IPs de Acesso</th><th>Região</th><th>Qtd. VMs</th><th style="text-align: right;">Ações / VMs</th></tr></thead>
+          <tbody id="tabela-legados"></tbody>
+        </table>
+      </section>
+    </div>
+
   </main>
+
+  <!-- MODAL PARA MÁQUINAS VIRTUAIS DO LEGADO -->
+  <div class="modal-overlay" id="modal-vms">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="font-size: 16px; font-weight: 700;"><i class="fa-solid fa-desktop" style="color: var(--neon-purple); margin-right: 8px;"></i> Servidores Virtuais Hospedados</h3>
+        <button class="btn-close" onclick="fecharModalVMs()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      
+      <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Adicione servidores virtuais hospedados neste servidor físico legado.</p>
+      
+      <form class="form-grid" id="form-cadastro-vm" style="margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--border-subtle);">
+        <input type="text" id="vm-nome" class="input-field" placeholder="Nome da VM (ex: VM-ERP-DB)" required>
+        <input type="text" id="vm-ip" class="input-field" placeholder="IP da VM (ex: 10.0.0.25)" required>
+        <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, #8b5cf6, #ff2d87);"><i class="fa-solid fa-plus"></i> Add VM</button>
+      </form>
+
+      <div id="lista-vms-modal" class="vm-list">
+        <!-- Lista de VMs injetada pelo JS -->
+      </div>
+    </div>
+  </div>
 
   <!-- ========================================================================= -->
   <!-- JAVASCRIPT E CREDENCIAIS DO GITHUB                                        -->
@@ -358,17 +441,24 @@
     let fileSha = ''; 
     let maquinas = [];
     let fisicos = [];
+    let legados = []; // Nova Array para os Legados
+    let serverLegadoAtualId = null; // Variável para controlar qual Servidor Legado está aberto no modal
+    
     let chartGeral = null, chartBlink = null, chartMg = null;
 
     function trocarAba(aba) {
       document.querySelectorAll('.tab-page').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      
       if (aba === 'migracoes') {
         document.getElementById('aba-migracoes').classList.add('active');
         document.getElementById('nav-btn-migracoes').classList.add('active');
-      } else {
+      } else if (aba === 'fisicos') {
         document.getElementById('aba-fisicos').classList.add('active');
         document.getElementById('nav-btn-fisicos').classList.add('active');
+      } else if (aba === 'legados') {
+        document.getElementById('aba-legados').classList.add('active');
+        document.getElementById('nav-btn-legados').classList.add('active');
       }
     }
 
@@ -383,8 +473,8 @@
 
         if (response.status === 404) {
           console.warn('Arquivo dados.json não encontrado no GitHub. Iniciando vazio.');
-          maquinas = []; fisicos = [];
-          renderizarDashboard(); renderizarFisicos();
+          maquinas = []; fisicos = []; legados = [];
+          renderizarDashboard(); renderizarFisicos(); renderizarLegados();
           return;
         }
 
@@ -394,26 +484,26 @@
         }
 
         const data = await response.json();
-        
         if (data.sha) fileSha = data.sha; 
 
         const base64Limpo = data.content.replace(/\s/g, '');
         const conteudoDecodificado = decodeURIComponent(escape(atob(base64Limpo)));
-        
         const json = JSON.parse(conteudoDecodificado);
 
         maquinas = json.maquinas || [];
         fisicos = json.fisicos || [];
+        legados = json.legados || []; // Carrega os legados
 
         renderizarDashboard();
         renderizarFisicos();
+        renderizarLegados();
       } catch (error) {
         console.error('ERRO CRÍTICO ao processar os dados:', error);
       }
     }
 
     async function salvarNoGitHub() {
-      const payload = { maquinas: maquinas, fisicos: fisicos };
+      const payload = { maquinas: maquinas, fisicos: fisicos, legados: legados };
       
       const conteudoString = JSON.stringify(payload, null, 2);
       const base64Content = btoa(unescape(encodeURIComponent(conteudoString)));
@@ -464,6 +554,69 @@
       else { alert('Erro ao excluir no GitHub.'); carregarDados(); }
     }
 
+    async function removerLegado(id) {
+      if (!confirm('Deseja realmente remover este Servidor Físico Legado e todas as suas VMs?')) return;
+      legados = legados.filter(l => l.id !== id);
+      const sucesso = await salvarNoGitHub();
+      if (sucesso) renderizarLegados();
+      else { alert('Erro ao excluir no GitHub.'); carregarDados(); }
+    }
+
+    // --- FUNÇÕES DO MODAL DE VMs ---
+    function abrirModalVMs(idLegado) {
+      serverLegadoAtualId = idLegado;
+      document.getElementById('modal-vms').classList.add('active');
+      renderizarListaVMsModal();
+    }
+
+    function fecharModalVMs() {
+      document.getElementById('modal-vms').classList.remove('active');
+      serverLegadoAtualId = null;
+      renderizarLegados(); // Atualiza a contagem de VMs na tabela principal
+    }
+
+    function renderizarListaVMsModal() {
+      const listaContainer = document.getElementById('lista-vms-modal');
+      listaContainer.innerHTML = '';
+      
+      const servidor = legados.find(l => l.id === serverLegadoAtualId);
+      if (!servidor || !servidor.virtuais || servidor.virtuais.length === 0) {
+        listaContainer.innerHTML = '<div style="color: var(--text-muted); font-size: 12px; text-align: center;">Nenhum servidor virtual hospedado.</div>';
+        return;
+      }
+
+      servidor.virtuais.forEach(vm => {
+        const item = document.createElement('div');
+        item.className = 'vm-item';
+        item.innerHTML = `
+          <div class="vm-item-info">
+            <span class="vm-item-nome"><i class="fa-solid fa-server" style="color: var(--neon-purple); margin-right: 6px;"></i>${vm.nome}</span>
+            <span class="vm-item-ip">IP: ${vm.ip}</span>
+          </div>
+          <button class="action-btn-delete" title="Excluir VM" onclick="removerVMLegado(${vm.id})">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        `;
+        listaContainer.appendChild(item);
+      });
+    }
+
+    async function removerVMLegado(vmId) {
+      if (!confirm('Excluir esta VM?')) return;
+      
+      const servidor = legados.find(l => l.id === serverLegadoAtualId);
+      if (servidor) {
+        servidor.virtuais = servidor.virtuais.filter(v => v.id !== vmId);
+        const sucesso = await salvarNoGitHub();
+        if (sucesso) {
+          renderizarListaVMsModal();
+        } else {
+          alert('Erro ao excluir VM.');
+        }
+      }
+    }
+
+    // --- RENDERS ---
     function inicializarGraficos() {
       if (typeof Chart === 'undefined') return;
       const ctxGeral = document.getElementById('chartStatusDonut').getContext('2d');
@@ -550,7 +703,7 @@
           <td><div class="server-name-cell"><div class="server-icon"><i class="fa-solid fa-server"></i></div><div><strong>${item.nome || 'Sem nome'}</strong><div style="font-size:11px;color:var(--text-muted);">ID: #${item.id ? item.id.toString().slice(-4) : 'N/A'}</div></div></div></td>
           <td><div class="cluster-tag"><span class="cluster-circle ${circleClass}"></span><span>${item.cluster || 'N/A'}</span></div></td>
           <td><span class="status-pill ${statusClass}"><i class="fa-solid ${statusIcon}"></i> ${item.status || 'Pendente'}</span></td>
-          <td style="color:var(--text-secondary);">${item.data || '2026-10-13'}</td>
+          <td style="color:var(--text-secondary);">${item.data || 'N/A'}</td>
           <td style="text-align:right;"><button class="action-btn-delete" title="Excluir" onclick="removerMaquina(${item.id})"><i class="fa-solid fa-trash-can"></i></button></td>
         `;
         tabela.appendChild(tr);
@@ -598,8 +751,6 @@
         else if (item.cluster === 'Legadas') circleClass = 'circle-legadas';
 
         const tr = document.createElement('tr');
-        
-        // LINHA DA TABELA ATUALIZADA COM O CAMPO QUANTIDADE
         tr.innerHTML = `
           <td><div class="server-name-cell"><div class="server-icon"><i class="fa-solid fa-hard-drive"></i></div><div><strong>${item.nome || 'Sem nome'}</strong><div style="font-size:11px;color:var(--text-muted);">ID: #${item.id ? item.id.toString().slice(-4) : 'N/A'}</div></div></div></td>
           <td style="font-family: monospace; color: var(--text-primary); font-size: 12px;">${item.serial || 'N/A'}</td>
@@ -607,8 +758,53 @@
           <td><span class="status-pill ${statusClass}"><i class="fa-solid ${statusIcon}"></i> ${item.finalidade || 'N/A'}</span></td>
           <td><i class="fa-solid fa-location-dot" style="color:var(--neon-pink);font-size:12px;"></i> ${item.localidade || 'N/A'}</td>
           <td><div class="cluster-tag"><span class="cluster-circle ${circleClass}"></span><span>${item.cluster || 'N/A'}</span></div></td>
-          <td style="color:var(--text-secondary);">${item.data || '2026-10-13'}</td>
+          <td style="color:var(--text-secondary);">${item.data || 'N/A'}</td>
           <td style="text-align:right;"><button class="action-btn-delete" title="Excluir" onclick="removerFisico(${item.id})"><i class="fa-solid fa-trash-can"></i></button></td>
+        `;
+        tabela.appendChild(tr);
+      });
+    }
+
+    function renderizarLegados() {
+      let totalVms = 0;
+      legados.forEach(l => { if(l.virtuais) totalVms += l.virtuais.length; });
+
+      document.getElementById('kpi-legados-total').innerText = legados.length;
+      document.getElementById('kpi-legados-vms').innerText = totalVms;
+
+      const tabela = document.getElementById('tabela-legados');
+      if (!tabela) return;
+      tabela.innerHTML = '';
+      
+      const termoBusca = (document.getElementById('filtro-busca-legado')?.value || '').toLowerCase();
+
+      const listaFiltrada = legados.filter(item => {
+        return (item.identificacao && item.identificacao.toLowerCase().includes(termoBusca)) || 
+               (item.operacao && item.operacao.toLowerCase().includes(termoBusca)) ||
+               (item.modelo && item.modelo.toLowerCase().includes(termoBusca)) ||
+               (item.regiao && item.regiao.toLowerCase().includes(termoBusca));
+      });
+
+      document.getElementById('table-legados-count').innerText = `${listaFiltrada.length} registos`;
+
+      listaFiltrada.forEach(item => {
+        const tr = document.createElement('tr');
+        const qtdVms = item.virtuais ? item.virtuais.length : 0;
+        
+        tr.innerHTML = `
+          <td><div class="server-name-cell"><div class="server-icon" style="color: var(--neon-cyan);"><i class="fa-solid fa-network-wired"></i></div><div><strong>${item.identificacao || 'N/A'}</strong><div style="font-size:11px;color:var(--text-muted);">${item.operacao || 'N/A'}</div></div></div></td>
+          <td style="color: var(--text-primary); font-size: 12px;">${item.modelo || 'N/A'}</td>
+          <td style="font-family: monospace; color: var(--text-secondary); font-size: 11px;">${item.ips || 'N/A'}</td>
+          <td><i class="fa-solid fa-location-dot" style="color:var(--neon-pink);font-size:12px;"></i> ${item.regiao || 'N/A'}</td>
+          <td style="font-weight: 600; color: var(--text-primary);"><span class="cluster-pill-badge" style="background: rgba(139, 92, 246, 0.15); color: var(--neon-purple);">${qtdVms} VMs</span></td>
+          <td style="text-align:right;">
+            <button class="action-btn-vms" title="Gerenciar VMs" onclick="abrirModalVMs(${item.id})">
+              <i class="fa-solid fa-desktop"></i> VMs
+            </button>
+            <button class="action-btn-delete" style="margin-left: 8px;" title="Excluir" onclick="removerLegado(${item.id})">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </td>
         `;
         tabela.appendChild(tr);
       });
@@ -618,6 +814,7 @@
       inicializarGraficos();
       carregarDados();
 
+      // Submit Cadastro Migração
       document.getElementById('form-cadastro')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         maquinas.unshift({
@@ -631,10 +828,9 @@
         else { maquinas.shift(); alert('Erro ao salvar no GitHub.'); }
       });
 
+      // Submit Cadastro Físicos
       document.getElementById('form-cadastro-fisico')?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        // RECOLHER TAMBÉM O CAMPO QUANTIDADE
         fisicos.unshift({
           id: Date.now(),
           nome: document.getElementById('fisico-nome').value.trim(),
@@ -645,15 +841,58 @@
           cluster: document.getElementById('fisico-cluster').value,
           data: new Date().toISOString().split('T')[0]
         });
-        
         if (await salvarNoGitHub()) { renderizarFisicos(); e.target.reset(); alert('Físico salvo no GitHub!'); }
         else { fisicos.shift(); alert('Erro ao salvar no GitHub.'); }
       });
 
+      // Submit Cadastro Legado
+      document.getElementById('form-cadastro-legado')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        legados.unshift({
+          id: Date.now(),
+          operacao: document.getElementById('legado-operacao').value.trim(),
+          identificacao: document.getElementById('legado-identificacao').value.trim(),
+          modelo: document.getElementById('legado-modelo').value.trim(),
+          ips: document.getElementById('legado-ips').value.trim(),
+          regiao: document.getElementById('legado-regiao').value.trim(),
+          virtuais: [], // Inicia com o array de VMs vazio
+          data: new Date().toISOString().split('T')[0]
+        });
+        if (await salvarNoGitHub()) { renderizarLegados(); e.target.reset(); alert('Ambiente Legado salvo no GitHub!'); }
+        else { legados.shift(); alert('Erro ao salvar no GitHub.'); }
+      });
+
+      // Submit Cadastro VM do Legado (Dentro do Modal)
+      document.getElementById('form-cadastro-vm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const servidor = legados.find(l => l.id === serverLegadoAtualId);
+        if (servidor) {
+          if(!servidor.virtuais) servidor.virtuais = [];
+          
+          const novaVM = {
+            id: Date.now(),
+            nome: document.getElementById('vm-nome').value.trim(),
+            ip: document.getElementById('vm-ip').value.trim()
+          };
+          
+          servidor.virtuais.unshift(novaVM);
+          
+          if (await salvarNoGitHub()) { 
+            renderizarListaVMsModal(); 
+            e.target.reset(); 
+          } else { 
+            servidor.virtuais.shift(); 
+            alert('Erro ao salvar VM no GitHub.'); 
+          }
+        }
+      });
+
+      // Listeners de Busca
       document.getElementById('filtro-busca')?.addEventListener('input', renderizarDashboard);
       document.getElementById('filtro-cluster-select')?.addEventListener('change', renderizarDashboard);
       document.getElementById('filtro-busca-fisico')?.addEventListener('input', renderizarFisicos);
       document.getElementById('filtro-finalidade-select')?.addEventListener('change', renderizarFisicos);
+      document.getElementById('filtro-busca-legado')?.addEventListener('input', renderizarLegados);
     }
 
     document.addEventListener('DOMContentLoaded', iniciarApp);
