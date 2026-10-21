@@ -5,13 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Migrações & Inventário Físico • Analytics</title>
   
-  <!-- Fontes e Ícones -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  
-  <!-- Chart.js para os gráficos -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
@@ -155,25 +152,26 @@
     .action-btn-delete:hover { color: var(--neon-pink); background: rgba(255, 45, 135, 0.1); }
     .action-btn-edit { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; padding: 6px; border-radius: 6px; transition: all 0.2s; }
     .action-btn-edit:hover { color: var(--neon-blue); background: rgba(59, 130, 246, 0.1); }
-    
-    .action-btn-vms { background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3); color: var(--neon-purple); cursor: pointer; font-size: 12px; padding: 6px 10px; border-radius: 6px; transition: all 0.2s; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
-    .action-btn-vms:hover { background: rgba(139, 92, 246, 0.3); color: #fff; }
 
-    @media (max-width: 1100px) { body { flex-direction: column; } aside.sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border-subtle); } .kpi-grid { grid-template-columns: repeat(2, 1fr); } .charts-grid { grid-template-columns: 1fr; } .form-grid { grid-template-columns: 1fr; } }
+    /* ESTILOS DA TABELA EXPANSÍVEL (MASTER-DETAIL) */
+    .btn-expand { background: rgba(255,255,255,0.05); border: 1px solid var(--border-subtle); color: var(--text-secondary); width: 28px; height: 28px; border-radius: 6px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+    .btn-expand:hover { background: var(--border-focus); color: #fff; }
+    .btn-expand.open { background: var(--neon-purple); color: #fff; transform: rotate(180deg); border-color: var(--neon-purple); }
     
-    /* ESTILOS DO MODAL PARA VMs */
-    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-    .modal-overlay.active { display: flex; }
-    .modal-content { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 24px; width: 100%; max-width: 700px; max-height: 90vh; overflow-y: auto; }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .btn-close { background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; }
-    .btn-close:hover { color: var(--neon-pink); }
-    .vm-list { margin-top: 10px; display: flex; flex-direction: column; gap: 10px; }
-    .vm-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-input); padding: 16px; border-radius: 8px; border: 1px solid var(--border-subtle); }
-    .vm-item-nome { font-weight: 600; font-size: 14px; color: var(--text-primary); }
+    .nested-row { display: none; background: #0f1219; border-bottom: 1px solid #1a1e2b; }
+    .nested-row.open { display: table-row; }
+    .nested-container { padding: 16px 20px 24px 60px; border-left: 2px solid var(--neon-purple); }
+    .nested-title { font-size: 12px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
     
-    .vm-badges-container { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-    .vm-badge { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 4px; background: #202434; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; }
+    .nested-table { width: 100%; border-collapse: collapse; font-size: 12px; background: var(--bg-card); border-radius: 8px; overflow: hidden; border: 1px solid var(--border-subtle); margin-bottom: 20px; }
+    .nested-table th { text-align: left; padding: 10px 14px; color: var(--text-secondary); font-weight: 600; font-size: 10px; text-transform: uppercase; background: #151822; border-bottom: 1px solid var(--border-subtle); }
+    .nested-table td { padding: 10px 14px; border-bottom: 1px solid var(--border-subtle); vertical-align: middle; color: var(--text-primary); }
+    .nested-table tr:last-child td { border-bottom: none; }
+    .nested-table tr:hover { background-color: #1a1e2b; }
+    
+    .vm-badge { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 4px; background: #202434; color: var(--text-secondary); display: inline-flex; align-items: center; gap: 4px; }
+
+    @media (max-width: 1100px) { body { flex-direction: column; } aside.sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border-subtle); } .kpi-grid { grid-template-columns: repeat(2, 1fr); } .charts-grid { grid-template-columns: 1fr; } .form-grid { grid-template-columns: 1fr; } .nested-container { padding-left: 16px; } }
   </style>
 </head>
 <body>
@@ -317,9 +315,13 @@
         
         <form class="form-grid" id="form-cadastro-fisico">
           <input type="text" id="fisico-nome" class="input-field" placeholder="Host/Modelo" required>
-          <input type="text" id="fisico-serial" class="input-field" placeholder="Serial Number (ex: SN1234)" required>
+          <input type="text" id="fisico-serial" class="input-field" placeholder="Serial Number" required>
           <input type="number" id="fisico-quantidade" class="input-field" placeholder="Qtd." required min="1" style="max-width: 80px;">
           
+          <input type="text" id="fisico-cpu" class="input-field" placeholder="CPU (Opcional)">
+          <input type="text" id="fisico-memoria" class="input-field" placeholder="Memória (Opcional)">
+          <input type="text" id="fisico-disco" class="input-field" placeholder="Disco (Opcional)">
+
           <select id="fisico-finalidade" class="input-field" required>
             <option value="">Selecione a Finalidade</option>
             <option value="Reutilizado">Reutilizado</option>
@@ -352,7 +354,7 @@
           </div>
         </div>
         <table class="data-table">
-          <thead><tr><th>Servidor Físico</th><th>Serial Number</th><th>Qtd.</th><th>Finalidade</th><th>Localidade</th><th>Cluster Associated</th><th>Data Registro</th><th style="text-align: right;">Ações</th></tr></thead>
+          <thead><tr><th>Servidor Físico</th><th>Serial Number</th><th>Especificações</th><th>Qtd.</th><th>Finalidade</th><th>Localidade</th><th>Cluster Associated</th><th>Data Registro</th><th style="text-align: right;">Ações</th></tr></thead>
           <tbody id="tabela-fisicos"></tbody>
         </table>
       </section>
@@ -372,36 +374,50 @@
         <div class="kpi-card"><div class="kpi-header"><div class="kpi-title-wrap"><div class="kpi-icon icon-purple"><i class="fa-solid fa-desktop"></i></div><span class="kpi-label">Servidores Virtuais</span></div></div><div class="kpi-content"><div><div class="kpi-value" style="color: var(--neon-purple);" id="kpi-legados-vms">0</div><span class="kpi-badge badge-purple" style="margin-top: 6px;">VMs Hospedadas</span></div></div></div>
       </section>
 
-      <!-- FORMULÁRIO: SERVIDOR FÍSICO LEGADO -->
+      <!-- FORMULÁRIO 1: SERVIDOR FÍSICO LEGADO (CHASSI/CLUSTER) -->
       <section class="form-card" id="secao-form-legado">
-        <div class="form-card-header"><i class="fa-solid fa-network-wired" style="color: var(--neon-cyan);"></i><h3 style="font-size: 15px; font-weight: 700;">Cadastrar Servidor Físico Legado</h3></div>
+        <div class="form-card-header"><i class="fa-solid fa-network-wired" style="color: var(--neon-cyan);"></i><h3 style="font-size: 15px; font-weight: 700;">Cadastrar Servidor Físico (Cluster Legado)</h3></div>
         <form class="form-grid" id="form-cadastro-legado">
           <input type="text" id="legado-operacao" class="input-field" placeholder="Operação Legada (ex: ERP Antigo)" required>
           <input type="text" id="legado-nome-cluster" class="input-field" placeholder="Nome do Cluster (ex: Cluster Legado 01)" required>
           <input type="number" id="legado-qtd-hosts" class="input-field" placeholder="Qtd. Hosts" required min="1" style="max-width: 100px;">
-          <input type="text" id="legado-modelo" class="input-field" placeholder="Modelo do Servidor" required>
+          <input type="text" id="legado-modelo" class="input-field" placeholder="Modelo do Servidor/Chassi" required>
           <input type="text" id="legado-ips" class="input-field" placeholder="IPs de acesso (ex: 10.0.0.5)" required>
           <input type="text" id="legado-regiao" class="input-field" placeholder="Região (Cidade/Estado)" required>
-          
           <select id="legado-zabbix" class="input-field" required>
             <option value="">Monitoramento Zabbix BTP</option>
             <option value="Sim">Sim (Ativo)</option>
             <option value="Não">Não (Inativo)</option>
           </select>
-          
-          <button type="submit" id="btn-submit-legado" class="btn-submit" style="background: linear-gradient(135deg, #00d2d3, #3b82f6);"><i class="fa-solid fa-plus"></i> Cadastrar Físico</button>
+          <button type="submit" id="btn-submit-legado" class="btn-submit" style="background: linear-gradient(135deg, #00d2d3, #3b82f6);"><i class="fa-solid fa-plus"></i> Cadastrar Cluster</button>
         </form>
       </section>
 
-      <!-- NOVO FORMULÁRIO: MÁQUINA VIRTUAL (SUBDIVISÃO) -->
+      <!-- FORMULÁRIO 2: HOST / NÓ FÍSICO (SUBDIVISÃO 1) -->
+      <section class="form-card" id="secao-form-node" style="border-top: 4px solid var(--neon-blue);">
+        <div class="form-card-header"><i class="fa-solid fa-server" style="color: var(--neon-blue);"></i><h3 style="font-size: 15px; font-weight: 700;">Cadastrar Host Físico (Nó)</h3></div>
+        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Vincule o nó físico ao cluster (servidor) legado.</p>
+        
+        <form class="form-grid" id="form-cadastro-node">
+          <select id="node-cluster" class="input-field" style="border-color: var(--neon-blue);" required>
+            <option value="">Selecione o Cluster...</option>
+          </select>
+          <input type="text" id="node-nome" class="input-field" placeholder="Nome do Nó (ex: Host-01)" required>
+          <input type="text" id="node-cpu" class="input-field" placeholder="CPU (ex: 2x Xeon 16c)" required>
+          <input type="text" id="node-memoria" class="input-field" placeholder="Memória (ex: 256GB)" required>
+          <input type="text" id="node-disco" class="input-field" placeholder="Disco (ex: 4TB NVMe)" required>
+          <button type="submit" id="btn-submit-node" class="btn-submit" style="background: linear-gradient(135deg, #2563eb, #3b82f6);"><i class="fa-solid fa-plus"></i> Cadastrar Nó</button>
+        </form>
+      </section>
+
+      <!-- FORMULÁRIO 3: MÁQUINA VIRTUAL (SUBDIVISÃO 2) -->
       <section class="form-card" id="secao-form-vm" style="border-top: 4px solid var(--neon-purple);">
         <div class="form-card-header"><i class="fa-solid fa-desktop" style="color: var(--neon-purple);"></i><h3 style="font-size: 15px; font-weight: 700;">Cadastrar Servidor Virtual (VM)</h3></div>
-        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Vincule a nova máquina virtual a um Servidor Físico (Host) já cadastrado acima.</p>
+        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Vincule a nova máquina virtual ao cluster legado.</p>
         
         <form class="form-grid" id="form-cadastro-vm-main">
-          <!-- Campo Dinâmico (Dropdown de Hosts) -->
           <select id="vm-main-host" class="input-field" style="border-color: var(--neon-purple);" required>
-            <option value="">Selecione o Nome do Cluster...</option>
+            <option value="">Selecione o Cluster...</option>
           </select>
           
           <input type="text" id="vm-main-nome" class="input-field" placeholder="Nome VM" required>
@@ -421,7 +437,7 @@
         </form>
       </section>
 
-      <!-- TABELA: AMBIENTES LEGADOS -->
+      <!-- TABELA: AMBIENTES LEGADOS (MASTER-DETAIL) -->
       <section class="table-card">
         <div class="table-top-bar">
           <div class="table-title-area"><h3>Inventário de Ambientes Legados</h3><span class="table-badge-counter" id="table-legados-count">0 registos</span></div>
@@ -430,7 +446,18 @@
           </div>
         </div>
         <table class="data-table">
-          <thead><tr><th>Nome do Cluster & Operação</th><th>Qtd. Hosts</th><th>Modelo Físico</th><th>IPs de Acesso</th><th>Região</th><th>Zabbix BTP</th><th>Qtd. VMs</th><th style="text-align: right;">Ações / VMs</th></tr></thead>
+          <thead>
+            <tr>
+              <th style="width: 40px;"></th>
+              <th>Cluster & Operação</th>
+              <th>Modelo Físico</th>
+              <th>Hosts Cads. / Total</th>
+              <th>IPs & Região</th>
+              <th>Zabbix BTP</th>
+              <th>Total VMs</th>
+              <th style="text-align: right;">Ações Cluster</th>
+            </tr>
+          </thead>
           <tbody id="tabela-legados"></tbody>
         </table>
       </section>
@@ -438,22 +465,7 @@
 
   </main>
 
-  <!-- MODAL PARA LISTAGEM E EDIÇÃO DAS VMs -->
-  <div class="modal-overlay" id="modal-vms">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 style="font-size: 16px; font-weight: 700;"><i class="fa-solid fa-desktop" style="color: var(--neon-purple); margin-right: 8px;"></i> Servidores Virtuais Hospedados</h3>
-        <button class="btn-close" onclick="fecharModalVMs()"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">Visualização das VMs alocadas neste Host Físico.</p>
-      
-      <!-- Container injetado pelo JavaScript -->
-      <div id="lista-vms-modal" class="vm-list"></div>
-    </div>
-  </div>
-
   <script>
-    // As duas metades exatas do seu token:
     const tokenPart1 = "github_pat_11CL423PA0t31kCt8J2xxo_"; 
     const tokenPart2 = "77HU5GVQO44xj5Fh3dxGXPRSWeemdpIN9muasF7ql87YJUJOKML0rHzRhqt"; 
     
@@ -469,11 +481,11 @@
     let fisicos = [];
     let legados = []; 
     
-    // Variáveis de controle para Edição
     let editLegadoId = null; 
+    let editNodeId = null;
+    let editNodeClusterId = null;
     let editVmId = null;
-    let editVmHostId = null;
-    let serverLegadoAtualId = null; // Para saber qual host está aberto no Modal
+    let editVmClusterId = null;
     
     let chartGeral = null, chartBlink = null, chartMg = null;
 
@@ -522,7 +534,7 @@
         renderizarDashboard();
         renderizarFisicos();
         renderizarLegados();
-        atualizarSelectHostsLegados(); // Preenche o dropdown do formulário de VMs
+        atualizarSelectHostsLegados(); 
       } catch (error) {
         console.error('Erro:', error);
       }
@@ -570,25 +582,28 @@
       if (await salvarNoGitHub()) renderizarFisicos(); else carregarDados();
     }
 
-    // --- FUNÇÕES DE FÍSICOS LEGADOS ---
-    
     function atualizarSelectHostsLegados() {
-      const select = document.getElementById('vm-main-host');
-      if (!select) return;
-      const valorAtual = select.value;
+      const selectVm = document.getElementById('vm-main-host');
+      const selectNode = document.getElementById('node-cluster');
+      if (!selectVm || !selectNode) return;
       
-      select.innerHTML = '<option value="">Selecione o Nome do Cluster...</option>';
+      const valorAtualVm = selectVm.value;
+      const valorAtualNode = selectNode.value;
+      
+      let html = '<option value="">Selecione o Cluster...</option>';
       legados.forEach(l => {
-        const opt = document.createElement('option');
-        opt.value = l.id;
-        const nomeClus = l.nomeCluster || l.identificacao || 'Sem Nome'; // Compatibilidade com dados antigos
-        opt.textContent = `${nomeClus} (${l.operacao})`;
-        select.appendChild(opt);
+        const nomeClus = l.nomeCluster || l.identificacao || 'Sem Nome'; 
+        html += `<option value="${l.id}">${nomeClus} (${l.operacao})</option>`;
       });
       
-      if (valorAtual) select.value = valorAtual;
+      selectVm.innerHTML = html;
+      selectNode.innerHTML = html;
+      
+      if (valorAtualVm) selectVm.value = valorAtualVm;
+      if (valorAtualNode) selectNode.value = valorAtualNode;
     }
 
+    // --- CLUSTER LEGADO ---
     function editarLegado(id) {
       const host = legados.find(l => l.id === id);
       if (!host) return;
@@ -601,15 +616,13 @@
       document.getElementById('legado-regiao').value = host.regiao || '';
       document.getElementById('legado-zabbix').value = host.zabbix || '';
 
-      editLegadoId = id; // Entra no modo de edição
+      editLegadoId = id; 
       document.getElementById('btn-submit-legado').innerHTML = '<i class="fa-solid fa-pen"></i> Salvar Alterações';
-      
-      // Rola a tela até o formulário
       document.getElementById('secao-form-legado').scrollIntoView({ behavior: 'smooth' });
     }
 
     async function removerLegado(id) {
-      if (!confirm('Aviso: Isso excluirá este Servidor Legado E TAMBÉM todas as VMs associadas a ele. Continuar?')) return;
+      if (!confirm('Aviso: Isso excluirá este Cluster Legado e TODAS as suas VMs e Hosts. Continuar?')) return;
       legados = legados.filter(l => l.id !== id);
       if (await salvarNoGitHub()) {
         renderizarLegados();
@@ -617,17 +630,44 @@
       } else { carregarDados(); }
     }
 
-    // --- FUNÇÕES DE VMs (MÁQUINAS VIRTUAIS) ---
+    // --- NÓS (HOSTS) ---
+    function editarNode(clusterId, nodeId) {
+      const cluster = legados.find(l => l.id === clusterId);
+      if (!cluster) return;
+      const node = cluster.hosts.find(n => n.id === nodeId);
+      if (!node) return;
 
-    function editarVM(hostId, vmId) {
-      const host = legados.find(l => l.id === hostId);
-      if (!host) return;
-      const vm = host.virtuais.find(v => v.id === vmId);
+      document.getElementById('node-cluster').value = clusterId;
+      document.getElementById('node-nome').value = node.nome || '';
+      document.getElementById('node-cpu').value = node.cpu || '';
+      document.getElementById('node-memoria').value = node.memoria || '';
+      document.getElementById('node-disco').value = node.disco || '';
+
+      editNodeId = nodeId; 
+      editNodeClusterId = clusterId;
+      document.getElementById('btn-submit-node').innerHTML = '<i class="fa-solid fa-pen"></i> Salvar Alterações';
+      document.getElementById('secao-form-node').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function removerNode(clusterId, nodeId) {
+      if (!confirm('Excluir este Host Físico?')) return;
+      const cluster = legados.find(l => l.id === clusterId);
+      if (cluster && cluster.hosts) {
+        cluster.hosts = cluster.hosts.filter(n => n.id !== nodeId);
+        if (await salvarNoGitHub()) {
+          renderizarLegados(); 
+        } else { alert('Erro ao excluir Host.'); }
+      }
+    }
+
+    // --- VMs ---
+    function editarVM(clusterId, vmId) {
+      const cluster = legados.find(l => l.id === clusterId);
+      if (!cluster) return;
+      const vm = cluster.virtuais.find(v => v.id === vmId);
       if (!vm) return;
 
-      fecharModalVMs(); // Fecha a janela do modal para editar na tela principal
-
-      document.getElementById('vm-main-host').value = hostId;
+      document.getElementById('vm-main-host').value = clusterId;
       document.getElementById('vm-main-nome').value = vm.nome || '';
       document.getElementById('vm-main-memoria').value = vm.memoria || '';
       document.getElementById('vm-main-vcpu').value = vm.vcpu || '';
@@ -637,81 +677,33 @@
       document.getElementById('vm-main-status').value = vm.statusLigado || '';
 
       editVmId = vmId; 
-      editVmHostId = hostId;
+      editVmClusterId = clusterId;
       document.getElementById('btn-submit-vm-main').innerHTML = '<i class="fa-solid fa-pen"></i> Salvar Alterações';
-      
-      // Rola a tela até o formulário da VM
       document.getElementById('secao-form-vm').scrollIntoView({ behavior: 'smooth' });
     }
 
-    async function removerVMLegado(hostId, vmId) {
+    async function removerVMLegado(clusterId, vmId) {
       if (!confirm('Excluir esta VM?')) return;
-      
-      const servidor = legados.find(l => l.id === hostId);
-      if (servidor && servidor.virtuais) {
-        servidor.virtuais = servidor.virtuais.filter(v => v.id !== vmId);
+      const cluster = legados.find(l => l.id === clusterId);
+      if (cluster && cluster.virtuais) {
+        cluster.virtuais = cluster.virtuais.filter(v => v.id !== vmId);
         if (await salvarNoGitHub()) {
-          renderizarListaVMsModal(); // Recarrega a lista dentro do Modal aberto
+          renderizarLegados(); 
         } else { alert('Erro ao excluir VM.'); }
       }
     }
 
-    // --- FUNÇÕES DO MODAL ---
-
-    function abrirModalVMs(idLegado) {
-      serverLegadoAtualId = idLegado;
-      document.getElementById('modal-vms').classList.add('active');
-      renderizarListaVMsModal();
-    }
-
-    function fecharModalVMs() {
-      document.getElementById('modal-vms').classList.remove('active');
-      serverLegadoAtualId = null;
-      renderizarLegados(); // Atualiza a contagem na tabela de trás
-    }
-
-    function renderizarListaVMsModal() {
-      const listaContainer = document.getElementById('lista-vms-modal');
-      listaContainer.innerHTML = '';
-      
-      const servidor = legados.find(l => l.id === serverLegadoAtualId);
-      if (!servidor || !servidor.virtuais || servidor.virtuais.length === 0) {
-        listaContainer.innerHTML = '<div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px;">Nenhum servidor virtual cadastrado neste Cluster.</div>';
-        return;
+    function toggleRow(rowId) {
+      const btn = document.getElementById(`btn-expand-${rowId}`);
+      const row = document.getElementById(`nested-${rowId}`);
+      if (row.classList.contains('open')) {
+        row.classList.remove('open');
+        btn.classList.remove('open');
+      } else {
+        row.classList.add('open');
+        btn.classList.add('open');
       }
-
-      servidor.virtuais.forEach(vm => {
-        const statusCorBg = vm.statusLigado === 'Ligado' ? 'rgba(16,185,129,0.15)' : 'rgba(255,45,135,0.15)';
-        const statusCorTxt = vm.statusLigado === 'Ligado' ? 'var(--neon-green)' : 'var(--neon-pink)';
-
-        const item = document.createElement('div');
-        item.className = 'vm-item';
-        
-        // Estrutura bonita de exibição para a VM dentro do modal
-        item.innerHTML = `
-          <div style="width: 100%;">
-            <div style="display:flex; justify-content:space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; margin-bottom: 8px;">
-              <span class="vm-item-nome"><i class="fa-solid fa-server" style="color: var(--neon-purple); margin-right: 6px;"></i>${vm.nome || 'VM sem nome'}</span>
-              <div>
-                <button class="action-btn-edit" title="Editar" onclick="editarVM(${servidor.id}, ${vm.id})"><i class="fa-solid fa-pen"></i></button>
-                <button class="action-btn-delete" title="Excluir" onclick="removerVMLegado(${servidor.id}, ${vm.id})"><i class="fa-solid fa-trash-can"></i></button>
-              </div>
-            </div>
-            <div class="vm-badges-container">
-              <span class="vm-badge"><i class="fa-solid fa-microchip"></i> vCPU: ${vm.vcpu || 'N/A'}</span>
-              <span class="vm-badge"><i class="fa-solid fa-memory"></i> RAM: ${vm.memoria || 'N/A'}</span>
-              <span class="vm-badge"><i class="fa-solid fa-hard-drive"></i> Disco: ${vm.disco || 'N/A'}</span>
-              <span class="vm-badge" style="color: var(--neon-cyan);"><i class="fa-solid fa-globe"></i> IP: ${vm.ip || 'N/A'}</span>
-              <span class="vm-badge"><i class="fa-solid fa-gear"></i> GCONF: ${vm.gconf || 'N/A'}</span>
-              <span class="vm-badge" style="background: ${statusCorBg}; color: ${statusCorTxt};"><i class="fa-solid fa-power-off"></i> ${vm.statusLigado || 'N/A'}</span>
-            </div>
-          </div>
-        `;
-        listaContainer.appendChild(item);
-      });
     }
-
-    // --- RENDERS GERAIS ---
 
     function inicializarGraficos() {
       if (typeof Chart === 'undefined') return;
@@ -828,7 +820,9 @@
       const listaFiltrada = fisicos.filter(item => {
         const atendeNome = (item.nome && item.nome.toLowerCase().includes(termoBusca)) || 
                            (item.localidade && item.localidade.toLowerCase().includes(termoBusca)) ||
-                           (item.serial && item.serial.toLowerCase().includes(termoBusca)); 
+                           (item.serial && item.serial.toLowerCase().includes(termoBusca)) ||
+                           (item.cpu && item.cpu.toLowerCase().includes(termoBusca)) ||
+                           (item.memoria && item.memoria.toLowerCase().includes(termoBusca)); 
         
         const atendeFinalidade = (finalidadeFiltro === 'TODOS') || (item.finalidade === finalidadeFiltro);
         return atendeNome && atendeFinalidade;
@@ -845,11 +839,23 @@
         if (item.cluster === 'Cluster MG') circleClass = 'circle-mg';
         else if (item.cluster === 'Cluster BTP') circleClass = 'circle-btp';
         else if (item.cluster === 'Legadas') circleClass = 'circle-legadas';
+        
+        let specsHtml = '';
+        if (item.cpu || item.memoria || item.disco) {
+          specsHtml += '<div style="display:flex; flex-direction:column; gap:3px;">';
+          if (item.cpu) specsHtml += `<span style="font-size:10px; color:var(--text-secondary);"><i class="fa-solid fa-microchip"></i> ${item.cpu}</span>`;
+          if (item.memoria) specsHtml += `<span style="font-size:10px; color:var(--text-secondary);"><i class="fa-solid fa-memory"></i> ${item.memoria}</span>`;
+          if (item.disco) specsHtml += `<span style="font-size:10px; color:var(--text-secondary);"><i class="fa-solid fa-hard-drive"></i> ${item.disco}</span>`;
+          specsHtml += '</div>';
+        } else {
+          specsHtml = '<span style="color:var(--text-muted); font-size:11px;">N/A</span>';
+        }
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td><div class="server-name-cell"><div class="server-icon"><i class="fa-solid fa-hard-drive"></i></div><div><strong>${item.nome || 'Sem nome'}</strong><div style="font-size:11px;color:var(--text-muted);">ID: #${item.id ? item.id.toString().slice(-4) : 'N/A'}</div></div></div></td>
           <td style="font-family: monospace; color: var(--text-primary); font-size: 12px;">${item.serial || 'N/A'}</td>
+          <td>${specsHtml}</td>
           <td style="font-weight: 600; color: var(--text-primary);">${item.quantidade || '1'}</td>
           <td><span class="status-pill ${statusClass}"><i class="fa-solid ${statusIcon}"></i> ${item.finalidade || 'N/A'}</span></td>
           <td><i class="fa-solid fa-location-dot" style="color:var(--neon-pink);font-size:12px;"></i> ${item.localidade || 'N/A'}</td>
@@ -885,12 +891,13 @@
       document.getElementById('table-legados-count').innerText = `${listaFiltrada.length} registos`;
 
       listaFiltrada.forEach(item => {
-        const tr = document.createElement('tr');
+        const trMain = document.createElement('tr');
         const qtdVms = item.virtuais ? item.virtuais.length : 0;
         const nomeClus = item.nomeCluster || item.identificacao || 'N/A';
-        const qtdHosts = item.qtdHosts || '1';
+        const qtdHostsEsperados = item.qtdHosts || '1';
+        const qtdHostsCadastrados = item.hosts ? item.hosts.length : 0;
         
-        // CONSTRUÇÃO DO BADGE DO ZABBIX
+        // Zabbix Badge
         let zabbixHtml = '';
         if (item.zabbix === 'Sim') {
           zabbixHtml = '<span class="status-pill status-migrado" style="padding: 3px 8px; font-size: 10px;"><i class="fa-solid fa-circle-check"></i> Ativo</span>';
@@ -899,28 +906,90 @@
         } else {
           zabbixHtml = '<span style="color: var(--text-muted); font-size: 11px;">N/A</span>';
         }
-        
-        tr.innerHTML = `
+
+        trMain.innerHTML = `
+          <td><button class="btn-expand" id="btn-expand-${item.id}" onclick="toggleRow(${item.id})"><i class="fa-solid fa-chevron-down"></i></button></td>
           <td><div class="server-name-cell"><div class="server-icon" style="color: var(--neon-cyan);"><i class="fa-solid fa-network-wired"></i></div><div><strong>${nomeClus}</strong><div style="font-size:11px;color:var(--text-muted);">${item.operacao || 'N/A'}</div></div></div></td>
-          <td style="font-weight: 600; color: var(--text-primary);">${qtdHosts}</td>
           <td style="color: var(--text-primary); font-size: 12px;">${item.modelo || 'N/A'}</td>
-          <td style="font-family: monospace; color: var(--text-secondary); font-size: 11px;">${item.ips || 'N/A'}</td>
-          <td><i class="fa-solid fa-location-dot" style="color:var(--neon-pink);font-size:12px;"></i> ${item.regiao || 'N/A'}</td>
+          <td style="font-size: 12px;"><span style="color:var(--neon-blue); font-weight:700;">${qtdHostsCadastrados}</span><span style="color:var(--text-muted);"> / ${qtdHostsEsperados}</span></td>
+          <td><div style="display:flex; flex-direction:column; gap:4px;"><span style="font-family: monospace; color: var(--text-secondary); font-size: 11px;">${item.ips || 'N/A'}</span><span style="font-size: 11px; color: var(--text-primary);"><i class="fa-solid fa-location-dot" style="color:var(--neon-pink);"></i> ${item.regiao || 'N/A'}</span></div></td>
           <td>${zabbixHtml}</td>
           <td style="font-weight: 600; color: var(--text-primary);"><span class="cluster-pill-badge" style="background: rgba(139, 92, 246, 0.15); color: var(--neon-purple);">${qtdVms} VMs</span></td>
           <td style="text-align:right;">
-            <button class="action-btn-vms" title="Gerenciar VMs" onclick="abrirModalVMs(${item.id})">
-              <i class="fa-solid fa-desktop"></i> VMs
-            </button>
-            <button class="action-btn-edit" style="margin-left: 4px;" title="Editar Host" onclick="editarLegado(${item.id})">
+            <button class="action-btn-edit" title="Editar Cluster" onclick="editarLegado(${item.id})">
               <i class="fa-solid fa-pen"></i>
             </button>
-            <button class="action-btn-delete" title="Excluir Host" onclick="removerLegado(${item.id})">
+            <button class="action-btn-delete" title="Excluir Cluster" onclick="removerLegado(${item.id})">
               <i class="fa-solid fa-trash-can"></i>
             </button>
           </td>
         `;
-        tabela.appendChild(tr);
+        tabela.appendChild(trMain);
+
+        // LINHA SECUNDÁRIA (EXPANSÍVEL) - MOSTRA HOSTS E VMs
+        const trSub = document.createElement('tr');
+        trSub.className = 'nested-row';
+        trSub.id = `nested-${item.id}`;
+        
+        // 1. Renderizar Tabela de Hosts
+        let hostsHtml = '';
+        if (item.hosts && item.hosts.length > 0) {
+          hostsHtml = `<table class="nested-table">
+                       <thead><tr><th>Nome do Host (Nó)</th><th>Specs (CPU / RAM / Disco)</th><th style="text-align:right;">Ações</th></tr></thead>
+                       <tbody>`;
+          item.hosts.forEach(node => {
+            hostsHtml += `<tr>
+                          <td><strong><i class="fa-solid fa-server" style="color:var(--neon-blue); margin-right:6px;"></i>${node.nome}</strong></td>
+                          <td><div style="display:flex; gap:8px;"><span class="vm-badge"><i class="fa-solid fa-microchip"></i> ${node.cpu || '-'}</span><span class="vm-badge"><i class="fa-solid fa-memory"></i> ${node.memoria || '-'}</span><span class="vm-badge"><i class="fa-solid fa-hard-drive"></i> ${node.disco || '-'}</span></div></td>
+                          <td style="text-align:right;">
+                            <button class="action-btn-edit" title="Editar Nó" onclick="editarNode(${item.id}, ${node.id})"><i class="fa-solid fa-pen"></i></button>
+                            <button class="action-btn-delete" title="Excluir Nó" onclick="removerNode(${item.id}, ${node.id})"><i class="fa-solid fa-trash-can"></i></button>
+                          </td>
+                        </tr>`;
+          });
+          hostsHtml += `</tbody></table>`;
+        } else {
+          hostsHtml = `<div style="font-size:12px; color:var(--text-muted); padding: 5px 0 15px 0;"><i class="fa-solid fa-circle-info" style="margin-right:6px;"></i> Nenhum Nó Físico (Host) cadastrado para este Cluster.</div>`;
+        }
+
+        // 2. Renderizar Tabela de VMs
+        let vmsHtml = '';
+        if (item.virtuais && item.virtuais.length > 0) {
+          vmsHtml = `<table class="nested-table" style="margin-bottom:0;">
+                       <thead><tr><th>Nome VM</th><th>Specs (vCPU / RAM / Disco)</th><th>IP / GCONF</th><th>Status</th><th style="text-align:right;">Ações</th></tr></thead>
+                       <tbody>`;
+          
+          item.virtuais.forEach(vm => {
+            const statusCorBg = vm.statusLigado === 'Ligado' ? 'rgba(16,185,129,0.15)' : 'rgba(255,45,135,0.15)';
+            const statusCorTxt = vm.statusLigado === 'Ligado' ? 'var(--neon-green)' : 'var(--neon-pink)';
+            
+            vmsHtml += `<tr>
+                          <td><strong><i class="fa-solid fa-desktop" style="color:var(--neon-purple); margin-right:6px;"></i>${vm.nome}</strong></td>
+                          <td><div style="display:flex; gap:8px;"><span class="vm-badge"><i class="fa-solid fa-microchip"></i> ${vm.vcpu || '-'}</span><span class="vm-badge"><i class="fa-solid fa-memory"></i> ${vm.memoria || '-'}</span><span class="vm-badge"><i class="fa-solid fa-hard-drive"></i> ${vm.disco || '-'}</span></div></td>
+                          <td><div style="display:flex; flex-direction:column; gap:4px;"><span style="color:var(--neon-cyan); font-family:monospace; font-size:11px;">IP: ${vm.ip || '-'}</span><span style="color:var(--text-secondary); font-size:10px;">GCONF: ${vm.gconf || '-'}</span></div></td>
+                          <td><span class="status-pill" style="background:${statusCorBg}; color:${statusCorTxt}; font-size:10px; padding:2px 6px;">${vm.statusLigado || 'N/A'}</span></td>
+                          <td style="text-align:right;">
+                            <button class="action-btn-edit" title="Editar VM" onclick="editarVM(${item.id}, ${vm.id})"><i class="fa-solid fa-pen"></i></button>
+                            <button class="action-btn-delete" title="Excluir VM" onclick="removerVMLegado(${item.id}, ${vm.id})"><i class="fa-solid fa-trash-can"></i></button>
+                          </td>
+                        </tr>`;
+          });
+          vmsHtml += `</tbody></table>`;
+        } else {
+          vmsHtml = `<div style="font-size:12px; color:var(--text-muted); padding: 5px 0;"><i class="fa-solid fa-circle-info" style="margin-right:6px;"></i> Nenhuma máquina virtual vinculada.</div>`;
+        }
+
+        trSub.innerHTML = `
+          <td colspan="8">
+            <div class="nested-container">
+              <div class="nested-title" style="color: var(--neon-blue);"><i class="fa-solid fa-server"></i> Hosts Físicos (Nós)</div>
+              ${hostsHtml}
+              
+              <div class="nested-title" style="color: var(--neon-purple); margin-top: 15px;"><i class="fa-solid fa-desktop"></i> Máquinas Virtuais (VMs)</div>
+              ${vmsHtml}
+            </div>
+          </td>`;
+        tabela.appendChild(trSub);
       });
     }
 
@@ -950,6 +1019,9 @@
           nome: document.getElementById('fisico-nome').value.trim(),
           serial: document.getElementById('fisico-serial').value.trim(),
           quantidade: document.getElementById('fisico-quantidade').value.trim(),
+          cpu: document.getElementById('fisico-cpu').value.trim(),
+          memoria: document.getElementById('fisico-memoria').value.trim(),
+          disco: document.getElementById('fisico-disco').value.trim(),
           finalidade: document.getElementById('fisico-finalidade').value,
           localidade: document.getElementById('fisico-localidade').value.trim(),
           cluster: document.getElementById('fisico-cluster').value,
@@ -959,7 +1031,7 @@
         else { fisicos.shift(); alert('Erro ao salvar no GitHub.'); }
       });
 
-      // --- SUBMIT DO SERVIDOR FÍSICO LEGADO (NOVO/EDIÇÃO) ---
+      // Submit Legados CLUSTER
       document.getElementById('form-cadastro-legado')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -974,16 +1046,15 @@
         };
 
         if (editLegadoId) {
-          // Atualiza registro existente
           const hostIndex = legados.findIndex(l => l.id === editLegadoId);
           if (hostIndex > -1) {
             legados[hostIndex] = { ...legados[hostIndex], ...hostData };
           }
         } else {
-          // Cria novo registro
           legados.unshift({
             id: Date.now(),
             ...hostData,
+            hosts: [],
             virtuais: [], 
             data: new Date().toISOString().split('T')[0]
           });
@@ -993,25 +1064,76 @@
           renderizarLegados(); 
           atualizarSelectHostsLegados(); 
           e.target.reset(); 
-          editLegadoId = null; // Zera o estado de edição
-          document.getElementById('btn-submit-legado').innerHTML = '<i class="fa-solid fa-plus"></i> Cadastrar Físico';
-          alert('Ambiente Legado salvo no GitHub!'); 
+          editLegadoId = null; 
+          document.getElementById('btn-submit-legado').innerHTML = '<i class="fa-solid fa-plus"></i> Cadastrar Cluster';
+          alert('Cluster Legado salvo no GitHub!'); 
         }
         else { carregarDados(); alert('Erro ao salvar no GitHub.'); }
       });
 
-      // --- SUBMIT DA VM (NOVO/EDIÇÃO) ---
+      // Submit Legados HOST (Nó)
+      document.getElementById('form-cadastro-node')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const clusterIdSelecionado = parseInt(document.getElementById('node-cluster').value);
+        const clusterDestino = legados.find(l => l.id === clusterIdSelecionado);
+        
+        if (!clusterDestino) { alert('Selecione um Cluster válido!'); return; }
+        if (!clusterDestino.hosts) clusterDestino.hosts = [];
+        
+        const novoNode = {
+          id: editNodeId || Date.now(),
+          nome: document.getElementById('node-nome').value.trim(),
+          cpu: document.getElementById('node-cpu').value.trim(),
+          memoria: document.getElementById('node-memoria').value.trim(),
+          disco: document.getElementById('node-disco').value.trim()
+        };
+
+        if (editNodeId) {
+          if (editNodeClusterId !== clusterIdSelecionado) {
+             const clusterAntigo = legados.find(l => l.id === editNodeClusterId);
+             if (clusterAntigo) clusterAntigo.hosts = clusterAntigo.hosts.filter(n => n.id !== editNodeId); 
+             clusterDestino.hosts.unshift(novoNode); 
+          } else {
+             const nodeIndex = clusterDestino.hosts.findIndex(n => n.id === editNodeId);
+             if (nodeIndex > -1) clusterDestino.hosts[nodeIndex] = novoNode;
+          }
+        } else {
+          clusterDestino.hosts.unshift(novoNode);
+        }
+
+        if (await salvarNoGitHub()) { 
+          renderizarLegados(); 
+          e.target.reset(); 
+          editNodeId = null; 
+          editNodeClusterId = null;
+          document.getElementById('btn-submit-node').innerHTML = '<i class="fa-solid fa-plus"></i> Cadastrar Nó';
+          
+          const subRow = document.getElementById(`nested-${clusterIdSelecionado}`);
+          const btnRow = document.getElementById(`btn-expand-${clusterIdSelecionado}`);
+          if (subRow && !subRow.classList.contains('open')) {
+            subRow.classList.add('open');
+            btnRow.classList.add('open');
+          }
+          alert('Nó Físico salvo no GitHub!'); 
+        } else { 
+          carregarDados();
+          alert('Erro ao salvar Nó no GitHub.'); 
+        }
+      });
+
+      // Submit VMs
       document.getElementById('form-cadastro-vm-main')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         
         const hostIdSelecionado = parseInt(document.getElementById('vm-main-host').value);
         const hostDestino = legados.find(l => l.id === hostIdSelecionado);
         
-        if (!hostDestino) { alert('Selecione um Host válido!'); return; }
+        if (!hostDestino) { alert('Selecione um Cluster válido!'); return; }
         if (!hostDestino.virtuais) hostDestino.virtuais = [];
         
         const novaVM = {
-          id: editVmId || Date.now(), // Mantém ID se for edição
+          id: editVmId || Date.now(), 
           nome: document.getElementById('vm-main-nome').value.trim(),
           memoria: document.getElementById('vm-main-memoria').value.trim(),
           vcpu: document.getElementById('vm-main-vcpu').value.trim(),
@@ -1022,27 +1144,31 @@
         };
 
         if (editVmId) {
-          // Lógica caso o usuário troque a VM de um Host para outro
-          if (editVmHostId !== hostIdSelecionado) {
-             const hostAntigo = legados.find(l => l.id === editVmHostId);
-             if (hostAntigo) hostAntigo.virtuais = hostAntigo.virtuais.filter(v => v.id !== editVmId); // Remove do antigo
-             hostDestino.virtuais.unshift(novaVM); // Add no novo
+          if (editVmClusterId !== hostIdSelecionado) {
+             const hostAntigo = legados.find(l => l.id === editVmClusterId);
+             if (hostAntigo) hostAntigo.virtuais = hostAntigo.virtuais.filter(v => v.id !== editVmId); 
+             hostDestino.virtuais.unshift(novaVM); 
           } else {
-             // Mesmo host, apenas atualiza a VM
              const vmIndex = hostDestino.virtuais.findIndex(v => v.id === editVmId);
              if (vmIndex > -1) hostDestino.virtuais[vmIndex] = novaVM;
           }
         } else {
-          // Cadastro Novo
           hostDestino.virtuais.unshift(novaVM);
         }
 
         if (await salvarNoGitHub()) { 
-          renderizarLegados(); // Atualiza a contagem de VMs da tabela principal
+          renderizarLegados(); 
           e.target.reset(); 
           editVmId = null; 
-          editVmHostId = null;
+          editVmClusterId = null;
           document.getElementById('btn-submit-vm-main').innerHTML = '<i class="fa-solid fa-plus"></i> Cadastrar VM';
+          
+          const subRow = document.getElementById(`nested-${hostIdSelecionado}`);
+          const btnRow = document.getElementById(`btn-expand-${hostIdSelecionado}`);
+          if (subRow && !subRow.classList.contains('open')) {
+            subRow.classList.add('open');
+            btnRow.classList.add('open');
+          }
           alert('Máquina Virtual salva no GitHub!'); 
         } else { 
           carregarDados();
@@ -1050,7 +1176,6 @@
         }
       });
 
-      // Listeners
       document.getElementById('filtro-busca')?.addEventListener('input', renderizarDashboard);
       document.getElementById('filtro-cluster-select')?.addEventListener('change', renderizarDashboard);
       document.getElementById('filtro-busca-fisico')?.addEventListener('input', renderizarFisicos);
