@@ -270,7 +270,16 @@
       "regiao": "São Paulo",
       "zabbix": "Não",
       "virtuais": [],
-      "data": "2026-10-21"
+      "data": "2026-10-21",
+      "hosts": [
+        {
+          "id": 1792615047441,
+          "nome": "pve01",
+          "cpu": "16",
+          "memoria": "50GB",
+          "disco": "1TB"
+        }
+      ]
     }
   ]
 }
