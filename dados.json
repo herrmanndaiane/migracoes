@@ -270,7 +270,15 @@
       "ips": "172.31.67.237",
       "regiao": "Santa Maria",
       "zabbix": "Sim",
-      "hosts": [],
+      "hosts": [
+        {
+          "id": 1792690935599,
+          "nome": "PVE-SMA01",
+          "cpu": "40",
+          "memoria": "1TB",
+          "disco": "22.7TB"
+        }
+      ],
       "virtuais": [],
       "data": "2026-10-22"
     },
