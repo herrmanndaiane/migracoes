@@ -215,7 +215,7 @@
           <span>Dashboard</span><i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i><span class="active">Analytics de Migração</span>
         </div>
         <div class="header-actions">
-          <button class="btn-action" onclick="window.print()"><i class="fa-solid fa-download"></i> Exportar</button>
+          <button class="btn-action" onclick="exportarCSV('migracoes')"><i class="fa-solid fa-file-csv"></i> Exportar CSV</button>
           <button class="btn-action primary" onclick="document.getElementById('nome-maquina').focus()"><i class="fa-solid fa-plus"></i> Novo Cadastro</button>
         </div>
       </div>
@@ -301,6 +301,10 @@
           <i class="fa-solid fa-house"></i><span>Home</span><i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i>
           <span>Gestão</span><i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i><span class="active">Servidores Físicos</span>
         </div>
+        <div class="header-actions">
+          <button class="btn-action" onclick="exportarCSV('fisicos')"><i class="fa-solid fa-file-csv"></i> Exportar CSV</button>
+          <button class="btn-action primary" onclick="document.getElementById('fisico-nome').focus()"><i class="fa-solid fa-plus"></i> Novo Cadastro</button>
+        </div>
       </div>
 
       <section class="kpi-grid">
@@ -310,6 +314,7 @@
         <div class="kpi-card"><div class="kpi-header"><div class="kpi-title-wrap"><div class="kpi-icon icon-purple"><i class="fa-solid fa-hand-holding-dollar"></i></div><span class="kpi-label">Venda</span></div></div><div class="kpi-content"><div><div class="kpi-value" style="color: var(--neon-purple);" id="kpi-fisico-venda">0</div><span class="kpi-badge badge-purple" style="margin-top: 6px;">Destinados</span></div></div></div>
       </section>
 
+      <!-- FORMULÁRIO FÍSICOS -->
       <section class="form-card">
         <div class="form-card-header"><i class="fa-solid fa-server" style="color: var(--neon-purple);"></i><h3 style="font-size: 15px; font-weight: 700;">Cadastrar Servidor Físico</h3></div>
         
@@ -366,6 +371,10 @@
         <div class="breadcrumb">
           <i class="fa-solid fa-house"></i><span>Home</span><i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i>
           <span>Gestão</span><i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i><span class="active">Ambientes Legados</span>
+        </div>
+        <div class="header-actions">
+          <button class="btn-action" onclick="exportarCSV('legados')"><i class="fa-solid fa-file-csv"></i> Exportar CSV</button>
+          <button class="btn-action primary" onclick="document.getElementById('legado-operacao').focus()"><i class="fa-solid fa-plus"></i> Novo Cadastro</button>
         </div>
       </div>
 
@@ -568,6 +577,65 @@
       } catch (error) {
         return false;
       }
+    }
+
+    // --- LÓGICA DE EXPORTAÇÃO CSV ---
+    function exportarCSV(tipo) {
+      let csv = [];
+      let filename = '';
+
+      if (tipo === 'migracoes') {
+        filename = 'export_migracoes.csv';
+        csv.push(['ID', 'Servidor', 'Cluster Alvo', 'Status Atual', 'Data Registro'].join(';'));
+        maquinas.forEach(m => {
+          csv.push([m.id, m.nome || '', m.cluster || '', m.status || '', m.data || ''].join(';'));
+        });
+      } else if (tipo === 'fisicos') {
+        filename = 'export_servidores_fisicos.csv';
+        csv.push(['ID', 'Servidor Físico', 'Serial Number', 'CPU', 'Memória', 'Disco', 'Qtd', 'Finalidade', 'Localidade', 'Cluster Associated', 'Data Registro'].join(';'));
+        fisicos.forEach(f => {
+          csv.push([f.id, f.nome || '', f.serial || '', f.cpu || '', f.memoria || '', f.disco || '', f.quantidade || '1', f.finalidade || '', f.localidade || '', f.cluster || '', f.data || ''].join(';'));
+        });
+      } else if (tipo === 'legados') {
+        filename = 'export_ambientes_legados.csv';
+        // Estrutura simplificada e unificada para o CSV de Legados
+        csv.push(['Tipo', 'Cluster Base', 'Nome / Identificação', 'Especificações (CPU/RAM/Disco)', 'IP / GCONF', 'Região', 'Status / Zabbix'].join(';'));
+        
+        legados.forEach(c => {
+          const clusterName = c.nomeCluster || c.identificacao || 'Sem Nome';
+          
+          // Linha do Cluster
+          csv.push(['Cluster Legado', clusterName, c.modelo || '', '', c.ips || '', c.regiao || '', c.zabbix || ''].join(';'));
+          
+          // Linhas dos Hosts (Nós)
+          if(c.hosts && c.hosts.length > 0) {
+            c.hosts.forEach(h => {
+              const specs = `${h.cpu || ''} / ${h.memoria || ''} / ${h.disco || ''}`;
+              csv.push(['Host (Nó)', clusterName, h.nome || '', specs, '', '', ''].join(';'));
+            });
+          }
+          
+          // Linhas das VMs
+          if(c.virtuais && c.virtuais.length > 0) {
+            c.virtuais.forEach(v => {
+              const specs = `${v.vcpu || ''} / ${v.memoria || ''} / ${v.disco || ''}`;
+              const redes = `${v.ip || ''} / ${v.gconf || ''}`;
+              csv.push(['Máquina Virtual', clusterName, v.nome || '', specs, redes, '', v.statusLigado || ''].join(';'));
+            });
+          }
+        });
+      }
+
+      // Adicionar BOM para corrigir acentuação no Excel e gerar ficheiro
+      const csvString = "\uFEFF" + csv.join('\n'); 
+      const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
 
     async function removerMaquina(id) {
@@ -897,7 +965,6 @@
         const qtdHostsEsperados = item.qtdHosts || '1';
         const qtdHostsCadastrados = item.hosts ? item.hosts.length : 0;
         
-        // Zabbix Badge
         let zabbixHtml = '';
         if (item.zabbix === 'Sim') {
           zabbixHtml = '<span class="status-pill status-migrado" style="padding: 3px 8px; font-size: 10px;"><i class="fa-solid fa-circle-check"></i> Ativo</span>';
@@ -926,12 +993,10 @@
         `;
         tabela.appendChild(trMain);
 
-        // LINHA SECUNDÁRIA (EXPANSÍVEL) - MOSTRA HOSTS E VMs
         const trSub = document.createElement('tr');
         trSub.className = 'nested-row';
         trSub.id = `nested-${item.id}`;
         
-        // 1. Renderizar Tabela de Hosts
         let hostsHtml = '';
         if (item.hosts && item.hosts.length > 0) {
           hostsHtml = `<table class="nested-table">
@@ -952,7 +1017,6 @@
           hostsHtml = `<div style="font-size:12px; color:var(--text-muted); padding: 5px 0 15px 0;"><i class="fa-solid fa-circle-info" style="margin-right:6px;"></i> Nenhum Nó Físico (Host) cadastrado para este Cluster.</div>`;
         }
 
-        // 2. Renderizar Tabela de VMs
         let vmsHtml = '';
         if (item.virtuais && item.virtuais.length > 0) {
           vmsHtml = `<table class="nested-table" style="margin-bottom:0;">
@@ -997,7 +1061,6 @@
       inicializarGraficos();
       carregarDados();
 
-      // Submit Migrações
       document.getElementById('form-cadastro')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         maquinas.unshift({
@@ -1011,7 +1074,6 @@
         else { maquinas.shift(); alert('Erro ao salvar no GitHub.'); }
       });
 
-      // Submit Físicos
       document.getElementById('form-cadastro-fisico')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         fisicos.unshift({
@@ -1031,7 +1093,6 @@
         else { fisicos.shift(); alert('Erro ao salvar no GitHub.'); }
       });
 
-      // Submit Legados CLUSTER
       document.getElementById('form-cadastro-legado')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -1071,7 +1132,6 @@
         else { carregarDados(); alert('Erro ao salvar no GitHub.'); }
       });
 
-      // Submit Legados HOST (Nó)
       document.getElementById('form-cadastro-node')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -1122,7 +1182,6 @@
         }
       });
 
-      // Submit VMs
       document.getElementById('form-cadastro-vm-main')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         
