@@ -270,7 +270,15 @@
       "ips": "https://172.27.33.5:8006",
       "regiao": "Porto Alegre",
       "zabbix": "Sim",
-      "hosts": [],
+      "hosts": [
+        {
+          "id": 1792690275329,
+          "nome": "node05",
+          "cpu": "12",
+          "memoria": "64GB",
+          "disco": "2.7TB"
+        }
+      ],
       "virtuais": [],
       "data": "2026-10-22"
     },
