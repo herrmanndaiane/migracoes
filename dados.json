@@ -279,7 +279,18 @@
           "disco": "2.7TB"
         }
       ],
-      "virtuais": [],
+      "virtuais": [
+        {
+          "id": 1792690631526,
+          "nome": "ct-avato-cgr-syslog-server",
+          "memoria": "8",
+          "vcpu": "8",
+          "disco": "40",
+          "ip": "Não tem",
+          "gconf": "Não tem",
+          "statusLigado": "Ligado"
+        }
+      ],
       "data": "2026-10-22"
     },
     {
