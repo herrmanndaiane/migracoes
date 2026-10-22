@@ -262,6 +262,19 @@
   ],
   "legados": [
     {
+      "id": 1792691431164,
+      "operacao": "BTP",
+      "nomeCluster": "BRASILTEC-PAE01",
+      "qtdHosts": "8",
+      "modelo": "-",
+      "ips": "172.31.66.11",
+      "regiao": "Porto Alegre",
+      "zabbix": "Sim",
+      "hosts": [],
+      "virtuais": [],
+      "data": "2026-10-22"
+    },
+    {
       "id": 1792690788347,
       "operacao": "BTP",
       "nomeCluster": "BRASILTECP-SMA01",
