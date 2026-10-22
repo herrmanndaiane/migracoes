@@ -262,6 +262,19 @@
   ],
   "legados": [
     {
+      "id": 1792690227492,
+      "operacao": "BTP",
+      "nomeCluster": "PVE-CGNAT",
+      "qtdHosts": "1",
+      "modelo": "-",
+      "ips": "https://172.27.33.5:8006",
+      "regiao": "Porto Alegre",
+      "zabbix": "Sim",
+      "hosts": [],
+      "virtuais": [],
+      "data": "2026-10-22"
+    },
+    {
       "id": 1792592090155,
       "operacao": "IVELOZ",
       "identificacao": "PVE-IVELOZ",
