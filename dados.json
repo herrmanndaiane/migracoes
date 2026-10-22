@@ -262,6 +262,19 @@
   ],
   "legados": [
     {
+      "id": 1792690788347,
+      "operacao": "BTP",
+      "nomeCluster": "BRASILTECP-SMA01",
+      "qtdHosts": "7",
+      "modelo": "-",
+      "ips": "172.31.67.237",
+      "regiao": "Santa Maria",
+      "zabbix": "Sim",
+      "hosts": [],
+      "virtuais": [],
+      "data": "2026-10-22"
+    },
+    {
       "id": 1792690227492,
       "operacao": "BTP",
       "nomeCluster": "PVE-CGNAT",
