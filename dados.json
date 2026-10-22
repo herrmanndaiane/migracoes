@@ -272,6 +272,13 @@
       "zabbix": "Sim",
       "hosts": [
         {
+          "id": 1792690973603,
+          "nome": "PVE-SMA02",
+          "cpu": "40",
+          "memoria": "1TB",
+          "disco": "22.7TB"
+        },
+        {
           "id": 1792690935599,
           "nome": "PVE-SMA01",
           "cpu": "40",
