@@ -270,7 +270,15 @@
       "ips": "172.31.66.11",
       "regiao": "Porto Alegre",
       "zabbix": "Sim",
-      "hosts": [],
+      "hosts": [
+        {
+          "id": 1792691493274,
+          "nome": "PVE-PAE01",
+          "cpu": "40",
+          "memoria": "1TB",
+          "disco": "22TB"
+        }
+      ],
       "virtuais": [],
       "data": "2026-10-22"
     },
